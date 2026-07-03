@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B1C94A572FF771DE006BB360 /* GlideCore in Frameworks */ = {isa = PBXBuildFile; productRef = B1C94A562FF771DE006BB360 /* GlideCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		E87A78EE2FEC4C3B002CA22F /* Glide-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Glide-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B1C94A572FF771DE006BB360 /* GlideCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = "Glide-Mac";
 			packageProductDependencies = (
+				B1C94A562FF771DE006BB360 /* GlideCore */,
 			);
 			productName = "Glide-Mac";
 			productReference = E87A78EE2FEC4C3B002CA22F /* Glide-Mac.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = E87A78E52FEC4C3B002CA22F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				B1C94A552FF771DE006BB360 /* XCLocalSwiftPackageReference "../Glide-Core" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E87A78EF2FEC4C3B002CA22F /* Products */;
 			projectDirPath = "";
@@ -331,6 +340,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B1C94A552FF771DE006BB360 /* XCLocalSwiftPackageReference "../Glide-Core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../Glide-Core";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B1C94A562FF771DE006BB360 /* GlideCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GlideCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E87A78E62FEC4C3B002CA22F /* Project object */;
 }
