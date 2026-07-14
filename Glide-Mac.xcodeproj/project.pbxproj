@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E8F67D6A2FF84B2900E6B800 /* GlideCore in Frameworks */ = {isa = PBXBuildFile; productRef = E8F67D692FF84B2900E6B800 /* GlideCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		E87A78EE2FEC4C3B002CA22F /* Glide-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Glide-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E8F67D6A2FF84B2900E6B800 /* GlideCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = "Glide-Mac";
 			packageProductDependencies = (
+				E8F67D692FF84B2900E6B800 /* GlideCore */,
 			);
 			productName = "Glide-Mac";
 			productReference = E87A78EE2FEC4C3B002CA22F /* Glide-Mac.app */;
@@ -78,7 +84,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2650;
-				LastUpgradeCheck = 2650;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					E87A78ED2FEC4C3B002CA22F = {
 						CreatedOnToolsVersion = 26.5;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = E87A78E52FEC4C3B002CA22F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E8F67D682FF84B2900E6B800 /* XCLocalSwiftPackageReference "../Glide-Core" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E87A78EF2FEC4C3B002CA22F /* Products */;
 			projectDirPath = "";
@@ -159,6 +168,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 6ASQXB4L83;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -184,6 +194,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -223,6 +234,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 6ASQXB4L83;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -241,6 +253,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -253,6 +266,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6ASQXB4L83;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -285,6 +299,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6ASQXB4L83;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -331,6 +346,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		E8F67D682FF84B2900E6B800 /* XCLocalSwiftPackageReference "../Glide-Core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../Glide-Core";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E8F67D692FF84B2900E6B800 /* GlideCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = GlideCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E87A78E62FEC4C3B002CA22F /* Project object */;
 }
