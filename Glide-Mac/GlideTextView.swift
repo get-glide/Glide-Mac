@@ -24,12 +24,12 @@ struct GlideTextView: NSViewRepresentable {
         textView.isSelectable = true
         textView.isRichText = false
         textView.allowsUndo = true
-        textView.backgroundColor = .clear
-        textView.drawsBackground = true
+        textView.drawsBackground = false
         textView.delegate = context.coordinator
  
         let scrollView = NSScrollView()
         scrollView.documentView = textView
+        scrollView.drawsBackground = false
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = false
         scrollView.autohidesScrollers = true
@@ -62,6 +62,8 @@ struct GlideTextView: NSViewRepresentable {
  
             isUserEditing = true
             
+            parent.text = textView.string
+            
             let currentLines = textView.string.components(separatedBy: "\n")
             var changedLineIndex: Int? = nil
  
@@ -83,7 +85,7 @@ struct GlideTextView: NSViewRepresentable {
                 parsedLines.removeLast()
             }
  
-            if let index = changedLineIndex {
+            if let index = changedLineIndex, index < parsedLines.count {
                 let changedLineText = index < currentLines.count ? currentLines[index] : ""
                 let result = parseLine(changedLineText)
                 parsedLines[index] = result

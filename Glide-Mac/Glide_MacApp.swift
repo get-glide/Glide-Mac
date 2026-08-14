@@ -14,5 +14,6 @@ struct Glide_MacApp: App {
         WindowGroup {
             ContentView()
         }
+        .windowStyle(.hiddenTitleBar)
     }
 }
