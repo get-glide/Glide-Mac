@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  Glide-Mac
-//
-//  Created by Aarnav on 6/24/26.
-//
-
 import SwiftUI
 import GlideCore
 
@@ -12,71 +5,53 @@ struct ContentView: View {
     private let store = try! NoteStore.makeDefault()
     
     @State private var noteNames: [String] = []
-    @State private var selectedNote: String?
-    @State private var noteContent: String = ""
-    @State private var searchQuery: String = ""
-    @State private var searchResults: [SearchResult] = []
-    @State private var hoveredLine: String?
+
+    @State private var selectedNote: String = DefaultNote.today.rawValue
+    @State private var noteText: String = ""
     
     var body: some View {
-        NavigationSplitView {
-            if searchQuery.isEmpty {
-                List(noteNames, id: \.self, selection: $selectedNote) { name in
-                    Text(name)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(hoveredLine == name ? Color.secondary.opacity(0.15) : Color.clear)
-                        )
-                        .contentShape(Rectangle())
-                        .onHover { isHovering in
-                            hoveredLine = isHovering ? name : nil
-                        }
-                }
-            } else {
-                List(searchResults, id: \.line) { result in
-                    Button {
-                        selectedNote = result.noteName
-                        searchQuery = ""
-                    } label: {
-                        VStack(alignment: .leading) {
-                            Text(result.line)
-                            Text(result.noteName)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(hoveredLine == result.line ? Color.secondary.opacity(0.15) : Color.clear)
-                        )
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .onHover { isHovering in
-                        hoveredLine = isHovering ? result.line : nil
-                    }
-                }
+        VStack(spacing: 8) {
+            TopBar()
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+            
+            HStack(spacing: 8) {
+                NotebookSidebar(
+                    noteNames: noteNames,
+                    selectedNote: selectedNote,
+                    onSelect: switchTo
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+                
+                NoteDetail(title: selectedNote, text: $noteText)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
             }
-        } detail: {
-            Text(noteContent)
+        }
+        .padding(12)
+        .background(Theme.surfaceApp)
+        .onTapGesture {
+            NSApp.keyWindow?.makeFirstResponder(nil)
         }
         .onAppear {
             try? store.createDefaultNotesIfNeeded()
             noteNames = (try? store.listNotes()) ?? []
-        }
-        .onChange(of: selectedNote) {
-            if let selectedNote {
-                noteContent = (try? store.read(selectedNote)) ?? ""
-            }
-        }
-        .searchable(text: $searchQuery)
-        .onChange(of: searchQuery) {
-            searchResults = (try? store.search(searchQuery)) ?? []
+            loadNote(selectedNote)
         }
     }
+    
+    private func loadNote(_ name: String) {
+        noteText = (try? store.read(name)) ?? ""
+    }
+    
+    private func switchTo(_ name: String) {
+        try? store.write(noteText, to: selectedNote)
+        selectedNote = name
+        loadNote(name)
+    }
+}
+
+#Preview {
+    ContentView()
 }
