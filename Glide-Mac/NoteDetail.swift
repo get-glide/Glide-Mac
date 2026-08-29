@@ -1,5 +1,6 @@
 import SwiftUI
 
+
 struct NoteDetail: View {
     let title: String
     @Binding var text: String
@@ -7,11 +8,11 @@ struct NoteDetail: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
-                .font(.largeTitle.bold())
+                .font(Theme.display(34))
                 .foregroundStyle(Theme.textStrong)
             
             Text("4 open · 2 done · edited 2m ago")
-                .font(.system(size: 13))
+                .font(Theme.ui(13))
                 .foregroundStyle(Theme.textFaint)
                 .padding(.top, 6)
             
@@ -26,7 +27,7 @@ struct NoteDetail: View {
             
             HStack{
                 Text("\(wordCount) words")
-                    .font(.system(size: 12))
+                    .font(Theme.ui(12))
                     .foregroundStyle(Theme.textFaint)
                 Spacer()
             }

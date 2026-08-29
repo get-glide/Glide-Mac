@@ -19,7 +19,16 @@ extension Color{
 }
 
 enum Theme{
-    // Surfaces
+
+    static func display(_ size: CGFloat) -> Font {
+        .custom("Bricolage Grotesque 24pt SemiCondensed", size: size)
+    }
+    static func ui(_ size: CGFloat) -> Font {
+        .custom("Hanken Grotesk", size: size)
+    }
+    static func mono(_ size: CGFloat) -> Font {
+        .custom("JetBrains Mono", size: size)
+    }
     
     static let surfaceApp = Color(hex: 0x14121C) // window background
     static let surfaceCard = Color(hex: 0x1B1926) // panels and cards
