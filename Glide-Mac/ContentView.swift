@@ -5,6 +5,7 @@ struct ContentView: View {
     private let store = try! NoteStore.makeDefault()
     
     @State private var noteNames: [String] = []
+
     @State private var selectedNote: String = DefaultNote.today.rawValue
     @State private var noteText: String = ""
     
