@@ -16,7 +16,7 @@ struct NotebookSidebar: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("NOTEBOOKS")
-                .font(.system(size: 11, weight: .semibold))
+                .font(Theme.ui(11))
                 .foregroundStyle(Theme.textFaint)
                 .tracking(1.5)
                 .padding(.horizontal, 12)
@@ -50,7 +50,7 @@ struct SidebarRow: View {
                 Text(name)
                 Spacer()
             }
-            .font(.system(size: 13, weight: .medium))
+            .font(Theme.ui(14))
             .foregroundStyle(isSelected ? Theme.primary : Theme.textBody)
             .padding(.horizontal, 10)
             .padding(.vertical, 8)

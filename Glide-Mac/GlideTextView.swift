@@ -89,8 +89,6 @@ struct GlideTextView: NSViewRepresentable {
                 let changedLineText = index < currentLines.count ? currentLines[index] : ""
                 let result = parseLine(changedLineText)
                 parsedLines[index] = result
-                
-                print(result)
             }
  
             isUserEditing = false

@@ -17,7 +17,7 @@ struct TopBar: View {
                 .foregroundStyle(Theme.primary)
             
             Text("GLIDE")
-                .font(.system(size: 16, weight: .bold))
+                .font(Theme.display(16))
                 .foregroundStyle(Theme.textStrong)
                 .tracking(2)
             
@@ -50,21 +50,21 @@ struct TopBar: View {
                     .foregroundStyle(Theme.textFaint)
                 TextField("Search notes, tasks, decks", text: $searchText)
                     .textFieldStyle(.plain)
+                    .font(Theme.ui(13))
                     .foregroundStyle(Theme.textBody)
                     .focused($searchFocused)
-                if !searchFocused{
+                if !searchFocused {
                     Text("⌘K")
-                        . foregroundStyle(Theme.textFaint)
+                        .font(Theme.mono(12))
+                        .foregroundStyle(Theme.textFaint)
                 }
             }
-            .font(.system(size: 13))
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
             .frame(width: searchFocused ? 320 : 180)
             .background(Theme.surfaceSunken)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .animation(.easeInOut(duration: 0.2), value: searchFocused)
-        
             
             Image(systemName: "moon")
                 .foregroundStyle(Theme.textFaint)

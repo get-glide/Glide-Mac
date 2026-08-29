@@ -14,9 +14,28 @@
 		E87A78EE2FEC4C3B002CA22F /* Glide-Mac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Glide-Mac.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E828C1C330432A4E0030EB09 /* Exceptions for "Glide-Mac" folder in "Glide-Mac" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Bricolage_Grotesque/OFL.txt,
+				Bricolage_Grotesque/README.txt,
+				Hanken_Grotesk/OFL.txt,
+				Hanken_Grotesk/README.txt,
+				Info.plist,
+				JetBrains_Mono/OFL.txt,
+				JetBrains_Mono/README.txt,
+			);
+			target = E87A78ED2FEC4C3B002CA22F /* Glide-Mac */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E87A78F02FEC4C3B002CA22F /* Glide-Mac */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E828C1C330432A4E0030EB09 /* Exceptions for "Glide-Mac" folder in "Glide-Mac" target */,
+			);
 			path = "Glide-Mac";
 			sourceTree = "<group>";
 		};
@@ -268,6 +287,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Glide-Mac/Info.plist";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -300,6 +320,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Glide-Mac/Info.plist";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
