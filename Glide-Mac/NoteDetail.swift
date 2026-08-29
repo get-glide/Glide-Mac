@@ -22,9 +22,24 @@ struct NoteDetail: View {
                 .frame(maxWidth: 680, alignment: .leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 16)
+            
+            
+            HStack{
+                Text("\(wordCount) words")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textFaint)
+                Spacer()
+            }
         }
-        .padding(28)
+        .padding(.horizontal, 28)
+        .padding(.top, 28)
+        .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.surfaceCard)
     }
+    
+    private var wordCount: Int {
+        text.split(whereSeparator: { $0.isWhitespace }).count
+    }
+
 }
