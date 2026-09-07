@@ -107,6 +107,25 @@ struct GlideTextView: NSViewRepresentable {
                     parent.text = textView.string
                 }
                 
+                let currentLineText = cachedLines[index]
+                if needsDueDate(line: currentLineText) {
+                    let lineWithDate = appendDueDate(line: changedLineText)
+                    
+                    let precedingText = cachedLines[..<index].joined(separator: "\n")
+                    let lineStart = precedingText.isEmpty ? 0 : precedingText.count + 1
+                    let lineRange = (textView.string as NSString).lineRange(for: NSRange(location: lineStart, length: 0))
+                    
+                    isApplyingStyling = true
+                    textView.textStorage?.beginEditing()
+                    textView.textStorage?.replaceCharacters(in: lineRange, with: lineWithDate)
+                    textView.textStorage?.endEditing()
+                    isApplyingStyling = false
+                    
+                    cachedLines[index] = lineWithDate
+                    parsedLines[index] = parseLine(lineWithDate)
+                    parent.text = textView.string
+                }
+                
                 print(parsedLines[index])
             }
  
