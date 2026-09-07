@@ -79,7 +79,7 @@ struct GlideTextView: NSViewRepresentable {
  
             cachedLines = currentLines
             while parsedLines.count < currentLines.count {
-                parsedLines.append(.note(text: ""))
+                parsedLines.append(.note(text: "", headingLevel: nil))
             }
             while parsedLines.count > currentLines.count {
                 parsedLines.removeLast()
