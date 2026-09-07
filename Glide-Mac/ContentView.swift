@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  Glide-Mac
 //
-//  Created by Aarnav on 6/24/26.
+//  Created by Pranay Venkat Aluri on 7/2/26.
 //
 
 import SwiftUI
@@ -13,27 +13,27 @@ struct ContentView: View{
     
     @State private var noteNames: [String] = []
     @State private var selectedNote: String?
-    @State private var noteContent: String = ""
+    @State private var noteContent: String = "Hello world"
     
     var body: some View{
-        NavigationSplitView {
-            List(noteNames, id: \.self, selection: $selectedNote) { name in
-                Text(name)
+            NavigationSplitView {
+                List(noteNames, id: \.self, selection: $selectedNote) { name in
+                    Text(name)
+                }
+            } detail: {
+                GlideTextView(text: $noteContent)
+                    .frame(minWidth: 400, minHeight: 300)
             }
-        }detail: {
-                Text(noteContent)
+            .onAppear {
+                print("Glide folder:", store.directory.path)
+                try? store.createDefaultNotesIfNeeded()
+                noteNames = (try? store.listNotes()) ?? []
             }
-        .onAppear{
-            print("Glide folder:", store.directory.path)
-            try? store.createDefaultNotesIfNeeded()
-            noteNames = (try? store.listNotes()) ?? []
-        }
-        .onChange(of: selectedNote){
-            if let selectedNote{
-                noteContent = (try? store.read(selectedNote)) ?? ""
+            .onChange(of: selectedNote) {
+                if let selectedNote{
+                    noteContent = (try? store.read(selectedNote)) ?? ""
+                }
             }
-        }
         }
     }
-
-
+}

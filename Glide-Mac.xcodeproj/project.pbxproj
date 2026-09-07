@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E8F67D6A2FF84B2900E6B800 /* GlideCore in Frameworks */ = {isa = PBXBuildFile; productRef = E8F67D692FF84B2900E6B800 /* GlideCore */; };
+		B1C94A572FF771DE006BB360 /* GlideCore in Frameworks */ = {isa = PBXBuildFile; productRef = B1C94A562FF771DE006BB360 /* GlideCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E8F67D6A2FF84B2900E6B800 /* GlideCore in Frameworks */,
+				B1C94A572FF771DE006BB360 /* GlideCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = "Glide-Mac";
 			packageProductDependencies = (
-				E8F67D692FF84B2900E6B800 /* GlideCore */,
+				B1C94A562FF771DE006BB360 /* GlideCore */,
 			);
 			productName = "Glide-Mac";
 			productReference = E87A78EE2FEC4C3B002CA22F /* Glide-Mac.app */;
@@ -101,7 +101,7 @@
 			mainGroup = E87A78E52FEC4C3B002CA22F;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				E8F67D682FF84B2900E6B800 /* XCLocalSwiftPackageReference "../Glide-Core" */,
+				B1C94A552FF771DE006BB360 /* XCLocalSwiftPackageReference "../Glide-Core" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E87A78EF2FEC4C3B002CA22F /* Products */;
@@ -266,8 +266,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 6ASQXB4L83;
+				DEVELOPMENT_TEAM = XVV7MKB992;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -299,8 +298,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 6ASQXB4L83;
+				DEVELOPMENT_TEAM = XVV7MKB992;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -348,14 +346,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		E8F67D682FF84B2900E6B800 /* XCLocalSwiftPackageReference "../Glide-Core" */ = {
+		B1C94A552FF771DE006BB360 /* XCLocalSwiftPackageReference "../Glide-Core" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../Glide-Core";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		E8F67D692FF84B2900E6B800 /* GlideCore */ = {
+		B1C94A562FF771DE006BB360 /* GlideCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = GlideCore;
 		};
