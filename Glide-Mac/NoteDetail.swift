@@ -1,5 +1,5 @@
 import SwiftUI
-
+import GlideCore
 
 struct NoteDetail: View {
     let title: String
@@ -7,40 +7,40 @@ struct NoteDetail: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(title)
-                .font(Theme.display(34))
-                .foregroundStyle(Theme.textStrong)
             
-            Text("4 open · 2 done · edited 2m ago")
-                .font(Theme.ui(13))
-                .foregroundStyle(Theme.textFaint)
-                .padding(.top, 6)
-            
-            Divider()
-                .padding(.top, 16)
-            
-            GlideTextView(text: $text)
-                .frame(maxWidth: 680, alignment: .leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 16)
-            
-            
-            HStack{
-                Text("\(wordCount) words")
-                    .font(Theme.ui(12))
-                    .foregroundStyle(Theme.textFaint)
+            // Top bar, 36pt, matches the sidebar header
+            HStack(spacing: 12) {
+                Text(title)
+                    .font(Theme.ui(14))
+                    .foregroundStyle(Theme.label)
+                
+                Text(counts)
+                    .font(Theme.mono(11))
+                    .foregroundStyle(Theme.labelTertiary)
+                
                 Spacer()
             }
+            .frame(height: Theme.barHeight)
+            .padding(.horizontal, 16)
+            
+            GlideTextView(text: $text)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 14)
         }
-        .padding(.horizontal, 28)
-        .padding(.top, 28)
-        .padding(.bottom, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.surfaceCard)
+        .background(Theme.surfaceApp)
     }
     
-    private var wordCount: Int {
-        text.split(whereSeparator: { $0.isWhitespace }).count
+    private var counts: String {
+        var open = 0
+        var done = 0
+        for line in text.components(separatedBy: "\n") {
+            if case .task(let task) = parseLine(line) {
+                task.checked ? (done += 1) : (open += 1)
+            }
+        }
+        if open == 0 && done == 0 { return "" }
+        return "\(open) open · \(done) done"
     }
-
 }
