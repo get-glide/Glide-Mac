@@ -8,8 +8,6 @@
 import SwiftUI
 import GlideCore
 
-import SwiftUI
-
 struct TasksPage: View {
     @State private var tasks: [AggregatedTask]
     let onOpen: (String) -> Void
@@ -25,32 +23,21 @@ struct TasksPage: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("Tasks")
-                    .font(Theme.ui(14))
-                    .foregroundStyle(Theme.label)
-                Spacer()
-            }
-            .frame(height: Theme.barHeight)
-            .padding(.horizontal, 16)
-            
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    ForEach(grouped, id: \.subject) { group in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(group.subject)
-                                .font(Theme.ui(13))
-                                .foregroundStyle(Theme.labelSecondary)
-                            
-                            ForEach(group.tasks) { task in
-                                row(for: task)
-                            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                ForEach(grouped, id: \.subject) { group in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(group.subject)
+                            .font(Theme.ui(13))
+                            .foregroundStyle(Theme.labelSecondary)
+                        
+                        ForEach(group.tasks) { task in
+                            row(for: task)
                         }
                     }
                 }
-                .padding(16)
             }
+            .padding(16)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.surfaceApp)

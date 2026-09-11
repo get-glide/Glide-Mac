@@ -16,7 +16,10 @@ struct Glide_MacApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .frame(minWidth: 940, minHeight: 620)
         }
         .windowStyle(.hiddenTitleBar)
+        .windowToolbarStyle(.unifiedCompact(showsTitle: false))
+        .defaultSize(width: 1280, height: 820)
     }
 }

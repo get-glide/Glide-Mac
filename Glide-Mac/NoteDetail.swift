@@ -7,55 +7,64 @@ struct NoteDetail: View {
     
     var subject: String? = "cs 2110"
     
-    @State private var showingSettings = false
+    private var subjectColor: Color {
+        guard let subject else { return Theme.labelTertiary }
+        let hues: [Color] = [
+            Color(hex: 0x8B96F5),
+            Color(hex: 0xF0865C),
+            Color(hex: 0x45C3A3),
+            Color(hex: 0xF0B455),
+        ]
+        let index = abs(subject.hashValue) % hues.count
+        return hues[index]
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             
-            HStack(spacing: 12) {
-                Text(title)
-                    .font(Theme.ui(14))
-                    .foregroundStyle(Theme.label)
-                
-                if let subject {
+            if let subject {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(subjectColor)
+                        .frame(width: 6, height: 6)
                     Text(subject)
                         .font(Theme.mono(11))
+                        .foregroundStyle(subjectColor)
+                    Text(counts)
+                        .font(Theme.mono(11))
                         .foregroundStyle(Theme.labelTertiary)
+                    Spacer()
                 }
-                
-                Text(counts)
-                    .font(Theme.mono(11))
-                    .foregroundStyle(Theme.labelTertiary)
-                
-                Spacer()
-                
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(Theme.labelQuaternary)
-                    .pressable { }
-                
-                Button(action: { showingSettings = true }) {
-                    Image(systemName: "gearshape")
-                        .foregroundStyle(Theme.labelQuaternary)
-                }
-                .buttonStyle(PressableButtonStyle())
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 12)
             }
-            .frame(height: Theme.barHeight)
-            .padding(.horizontal, 16)
             
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: 24) {
                 NoteOutline(items: MockOutline.items)
+                    .frame(maxWidth: 140, alignment: .topLeading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 20)
+                    .padding(.top, 2)
                 
-                GlideTextView(text: $text)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                ZStack(alignment: .topLeading) {
+                    if text.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Start writing, or type [ ] to add a task")
+                                .font(Theme.ui(13))
+                                .foregroundStyle(Theme.labelQuaternary)
+                        }
+                        .allowsHitTesting(false)
+                    }
+                    GlideTextView(text: $text)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 14)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.surfaceApp)
-        .sheet(isPresented: $showingSettings) {
-            SettingsView()
-        }
     }
     
     private var counts: String {

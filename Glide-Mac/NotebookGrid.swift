@@ -14,36 +14,24 @@ struct NotebookGrid: View {
     private let columns = [GridItem(.adaptive(minimum: 180), spacing: Theme.gap)]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            
-            HStack {
-                Text("Notebook")
-                    .font(Theme.ui(14))
-                    .foregroundStyle(Theme.label)
-                Spacer()
-            }
-            .frame(height: Theme.barHeight)
-            .padding(.horizontal, 16)
-            
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: Theme.gap) {
-                    ForEach(entries) { entry in
-                        GlideTile {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(entry.name)
-                                    .font(Theme.ui(14.5))
-                                    .foregroundStyle(Theme.label)
-                                Text(countsLabel(entry))
-                                    .font(Theme.mono(11))
-                                    .foregroundStyle(Theme.labelTertiary)
-                            }
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: Theme.gap) {
+                ForEach(entries) { entry in
+                    GlideTile {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(entry.name)
+                                .font(Theme.ui(14.5))
+                                .foregroundStyle(Theme.label)
+                            Text(countsLabel(entry))
+                                .font(Theme.mono(11))
+                                .foregroundStyle(Theme.labelTertiary)
                         }
-                        .contentShape(Rectangle())
-                        .pressable { onOpen(entry.name) }
                     }
+                    .contentShape(Rectangle())
+                    .pressable { onOpen(entry.name) }
                 }
-                .padding(16)
             }
+            .padding(16)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.surfaceApp)

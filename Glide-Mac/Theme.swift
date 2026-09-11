@@ -18,8 +18,6 @@ extension Color {
 
 enum Theme {
     
-    
-    
     static func display(_ size: CGFloat) -> Font {
         .custom("Bricolage Grotesque 24pt SemiCondensed", size: size)
     }
@@ -30,13 +28,10 @@ enum Theme {
         .custom("JetBrains Mono", size: size)
     }
     
-    
-    
-    static let surfaceApp  = Color(hex: 0x16150F)
-    static let surfaceTile = Color(hex: 0x1E1C14)
-    static let separator   = Color(hex: 0x35322A)
-    
-    
+    static let surfaceApp     = Color(hex: 0x16150F)
+    static let surfaceSidebar = Color(hex: 0x0D0C09)
+    static let surfaceTile    = Color(hex: 0x1E1C14)
+    static let separator      = Color(hex: 0x35322A)
     
     static let label           = Color(hex: 0xF0EDE3)
     static let labelSecondary  = Color(hex: 0x8A8577)
@@ -44,7 +39,8 @@ enum Theme {
     static let labelQuaternary = Color(hex: 0x4A4740)
     static let prose           = Color(hex: 0xCFCABA)
     
-    
+    static let accent     = Color(hex: 0x8B96F5)
+    static let accentTint = Color(hex: 0x2A2A44)
     
     static let tileRadius: CGFloat  = 10
     static let tilePadding: CGFloat = 14
@@ -52,8 +48,6 @@ enum Theme {
     static let barHeight: CGFloat   = 36
     static let railWidth: CGFloat   = 214
     static let hourHeight: CGFloat  = 46
-    
-    
     
     static let surfaceCard   = surfaceTile
     static let surfaceSunken = surfaceTile
@@ -72,8 +66,6 @@ enum Theme {
     static let danger        = Color(hex: 0xC4623F)
 }
 
-
-
 struct PressableButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -82,8 +74,6 @@ struct PressableButtonStyle: ButtonStyle {
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
-
-
 
 extension View {
     func pressable(action: @escaping () -> Void) -> some View {

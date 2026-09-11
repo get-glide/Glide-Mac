@@ -71,15 +71,12 @@ struct GlideTextView: NSViewRepresentable {
             let selected = textView.selectedRanges
             
             let full = storage.string as NSString
-            var location = 0
-            
             storage.beginEditing()
             full.enumerateSubstrings(in: NSRange(location: 0, length: full.length),
                                      options: [.byLines, .substringNotRequired]) { _, range, enclosingRange, _ in
                 let lineText = full.substring(with: enclosingRange)
                 let parsed = parseLine(lineText)
                 self.apply(parsed, to: enclosingRange, in: storage)
-                location = enclosingRange.location + enclosingRange.length
             }
             storage.endEditing()
             
@@ -91,22 +88,21 @@ struct GlideTextView: NSViewRepresentable {
             
             switch line {
             case .task(let task):
-                let font = NSFont.monospacedSystemFont(ofSize: 13.5, weight: .regular)
                 let color = task.checked ? NSColor(Theme.labelTertiary) : NSColor(Theme.label)
-                storage.addAttribute(.font, value: font, range: range)
                 storage.addAttribute(.foregroundColor, value: color, range: range)
+                storage.addAttribute(.backgroundColor, value: NSColor(Theme.surfaceTile), range: range)
+                
+                let paragraph = NSMutableParagraphStyle()
+                paragraph.paragraphSpacingBefore = 4
+                paragraph.paragraphSpacing = 4
+                storage.addAttribute(.paragraphStyle, value: paragraph, range: range)
                 
             case .note(_, let headingLevel):
-                if let level = headingLevel {
-                    let size: CGFloat = level == 1 ? 20 : level == 2 ? 15 : 13.5
-                    storage.addAttribute(.font, value: NSFont(name: "Hanken Grotesk", size: size)
-                                         ?? .systemFont(ofSize: size), range: range)
-                    storage.addAttribute(.foregroundColor, value: NSColor(Theme.label), range: range)
-                } else {
-                    storage.addAttribute(.font, value: NSFont(name: "Hanken Grotesk", size: 14.5)
-                                         ?? .systemFont(ofSize: 14.5), range: range)
-                    storage.addAttribute(.foregroundColor, value: NSColor(Theme.prose), range: range)
-                }
+                storage.addAttribute(.foregroundColor, value: NSColor(Theme.prose), range: range)
+                let paragraph = NSMutableParagraphStyle()
+                paragraph.paragraphSpacingBefore = headingLevel != nil ? 12 : 6
+                paragraph.paragraphSpacing = 6
+                storage.addAttribute(.paragraphStyle, value: paragraph, range: range)
             }
         }
     }

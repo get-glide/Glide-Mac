@@ -27,16 +27,15 @@ struct NoteOutline: View {
     let items: [OutlineItem]
     
     var body: some View {
-        GlideTile {
-            VStack(alignment: .leading, spacing: 7) {
-                ForEach(items) { item in
-                    Text(item.title)
-                        .font(Theme.ui(12.5))
-                        .foregroundStyle(item.level == 0 ? Theme.label : Theme.labelSecondary)
-                        .padding(.leading, item.level == 0 ? 0 : 12)
-                }
+        VStack(alignment: .leading, spacing: 7) {
+            ForEach(items) { item in
+                Text(item.title)
+                    .font(Theme.ui(12.5))
+                    .foregroundStyle(item.level == 0 ? Theme.label : Theme.labelSecondary)
+                    .padding(.leading, item.level == 0 ? 0 : 12)
             }
         }
         .frame(width: 146, alignment: .topLeading)
+        .padding(.leading, 24)
     }
 }

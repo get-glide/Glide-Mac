@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Environment(\.dismiss) private var dismiss
+    var onClose: () -> Void = {}
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -11,11 +11,9 @@ struct SettingsView: View {
                     .font(Theme.ui(14))
                     .foregroundStyle(Theme.label)
                 Spacer()
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark")
-                        .foregroundStyle(Theme.labelTertiary)
-                }
-                .buttonStyle(.plain)
+                Image(systemName: "xmark")
+                    .foregroundStyle(Theme.labelTertiary)
+                    .pressable { onClose() }
             }
             .frame(height: Theme.barHeight)
             .padding(.horizontal, 16)
