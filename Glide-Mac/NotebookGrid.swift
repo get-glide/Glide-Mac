@@ -8,30 +8,49 @@
 import SwiftUI
 
 struct NotebookGrid: View {
-    let noteNames: [String]
+    let entries: [NotebookEntry]
     let onOpen: (String) -> Void
     
     private let columns = [GridItem(.adaptive(minimum: 180), spacing: Theme.gap)]
     
     var body: some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: Theme.gap) {
-                ForEach(noteNames, id: \.self) { name in
-                    GlideTile {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text(name)
-                                .font(Theme.ui(14.5))
-                                .foregroundStyle(Theme.label)
-                            Text("—")
-                                .font(Theme.mono(11))
-                                .foregroundStyle(Theme.labelTertiary)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture { onOpen(name) }
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            
+            HStack {
+                Text("Notebook")
+                    .font(Theme.ui(14))
+                    .foregroundStyle(Theme.label)
+                Spacer()
             }
-            .padding(14)
+            .frame(height: Theme.barHeight)
+            .padding(.horizontal, 16)
+            
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: Theme.gap) {
+                    ForEach(entries) { entry in
+                        GlideTile {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(entry.name)
+                                    .font(Theme.ui(14.5))
+                                    .foregroundStyle(Theme.label)
+                                Text(countsLabel(entry))
+                                    .font(Theme.mono(11))
+                                    .foregroundStyle(Theme.labelTertiary)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                        .pressable { onOpen(entry.name) }
+                    }
+                }
+                .padding(16)
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Theme.surfaceApp)
+    }
+    
+    private func countsLabel(_ entry: NotebookEntry) -> String {
+        if entry.open == 0 && entry.done == 0 { return "No tasks" }
+        return "\(entry.open) open · \(entry.done) done"
     }
 }

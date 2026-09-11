@@ -3,11 +3,14 @@ import GlideCore
 
 enum Route: Hashable {
     case notebook
+    case tasks
     case note(String)
 }
 
 struct ContentView: View {
     private let store = try! NoteStore.makeDefault()
+    private let summaryProvider: NotebookSummaryProviding = MockNotebookSummaries()
+    private let taskAggregator: TaskAggregating = MockTaskAggregator()
     
     @State private var visibility: NavigationSplitViewVisibility = .all
     @State private var noteNames: [String] = []
@@ -16,8 +19,13 @@ struct ContentView: View {
     
     var body: some View {
         NavigationSplitView(columnVisibility: $visibility) {
-            DaySidebar(tasks: railTasks, untimedCount: untimedCount)
-                .navigationSplitViewColumnWidth(min: 200, ideal: Theme.railWidth, max: 280)
+            DaySidebar(
+                tasks: railTasks,
+                untimedCount: untimedCount,
+                onOpenNotebook: { route = .notebook },
+                onOpenTasks: { route = .tasks }
+            )
+            .navigationSplitViewColumnWidth(min: 200, ideal: Theme.railWidth, max: 280)
         } detail: {
             detailPane
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -37,7 +45,11 @@ struct ContentView: View {
     private var detailPane: some View {
         switch route {
         case .notebook:
-            NotebookGrid(noteNames: noteNames) { name in
+            NotebookGrid(entries: summaryProvider.summaries()) { name in
+                openNote(name)
+            }
+        case .tasks:
+            TasksPage(tasks: taskAggregator.allTasks()) { name in
                 openNote(name)
             }
         case .note(let name):

@@ -5,31 +5,57 @@ struct NoteDetail: View {
     let title: String
     @Binding var text: String
     
+    var subject: String? = "cs 2110"
+    
+    @State private var showingSettings = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             
-            // Top bar, 36pt, matches the sidebar header
             HStack(spacing: 12) {
                 Text(title)
                     .font(Theme.ui(14))
                     .foregroundStyle(Theme.label)
+                
+                if let subject {
+                    Text(subject)
+                        .font(Theme.mono(11))
+                        .foregroundStyle(Theme.labelTertiary)
+                }
                 
                 Text(counts)
                     .font(Theme.mono(11))
                     .foregroundStyle(Theme.labelTertiary)
                 
                 Spacer()
+                
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(Theme.labelQuaternary)
+                    .pressable { }
+                
+                Button(action: { showingSettings = true }) {
+                    Image(systemName: "gearshape")
+                        .foregroundStyle(Theme.labelQuaternary)
+                }
+                .buttonStyle(PressableButtonStyle())
             }
             .frame(height: Theme.barHeight)
             .padding(.horizontal, 16)
             
-            GlideTextView(text: $text)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 14)
+            HStack(alignment: .top, spacing: 10) {
+                NoteOutline(items: MockOutline.items)
+                
+                GlideTextView(text: $text)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 14)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.surfaceApp)
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+        }
     }
     
     private var counts: String {

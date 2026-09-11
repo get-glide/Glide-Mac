@@ -11,6 +11,8 @@ import GlideCore
 struct DaySidebar: View {
     let tasks: [RailTask]
     let untimedCount: Int
+    let onOpenNotebook: () -> Void
+    let onOpenTasks: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -27,6 +29,12 @@ struct DaySidebar: View {
                 Spacer()
             }
             .frame(height: Theme.barHeight)
+            
+            HStack(spacing: 8) {
+                navButton("Notebook", action: onOpenNotebook)
+                navButton("Tasks", action: onOpenTasks)
+            }
+            .padding(.bottom, 10)
             
             TodayRail(tasks: tasks)
             
@@ -47,5 +55,16 @@ struct DaySidebar: View {
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.surfaceApp)
+    }
+    
+    private func navButton(_ label: String, action: @escaping () -> Void) -> some View {
+        Text(label)
+            .font(Theme.ui(12))
+            .foregroundStyle(Theme.labelSecondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Theme.surfaceTile)
+            .clipShape(RoundedRectangle(cornerRadius: 7))
+            .pressable(action: action)
     }
 }
