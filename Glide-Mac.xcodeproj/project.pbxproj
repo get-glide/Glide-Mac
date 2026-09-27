@@ -18,13 +18,13 @@
 		E828C1C330432A4E0030EB09 /* Exceptions for "Glide-Mac" folder in "Glide-Mac" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Bricolage_Grotesque/OFL.txt,
-				Bricolage_Grotesque/README.txt,
-				Hanken_Grotesk/OFL.txt,
-				Hanken_Grotesk/README.txt,
+				"Fonts & Recources/Bricolage_Grotesque/OFL.txt",
+				"Fonts & Recources/Bricolage_Grotesque/README.txt",
+				"Fonts & Recources/Hanken_Grotesk/OFL.txt",
+				"Fonts & Recources/Hanken_Grotesk/README.txt",
+				"Fonts & Recources/JetBrains_Mono/OFL.txt",
+				"Fonts & Recources/JetBrains_Mono/README.txt",
 				Info.plist,
-				JetBrains_Mono/OFL.txt,
-				JetBrains_Mono/README.txt,
 			);
 			target = E87A78ED2FEC4C3B002CA22F /* Glide-Mac */;
 		};
