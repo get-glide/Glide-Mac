@@ -2,16 +2,15 @@ import SwiftUI
 import GlideCore
 
 enum Route: Hashable {
-    case notebook
+    case folder
     case tasks
     case note(String)
 }
 
 struct ContentView: View {
-    private let store = try! NoteStore.makeDefault()
-    private let summaryProvider: NotebookSummaryProviding = MockNotebookSummaries()
-    private let taskAggregator: TaskAggregating = MockTaskAggregator()
-    
+    private let store: NoteStore
+    @StateObject private var taskPanel: TaskPanelViewModel
+    @State private var sidebarRange: SidebarRange = .today
     @State private var visibility: NavigationSplitViewVisibility = .all
     @State private var noteNames: [String] = []
     @State private var route: Route = .note(DefaultNote.today.rawValue)
@@ -20,10 +19,17 @@ struct ContentView: View {
     @State private var searchExpanded = false
     @State private var showingSettings = false
     @FocusState private var searchFocused: Bool
+
+    init() {
+        let store = try! NoteStore.makeDefault()
+        self.store = store
+        _taskPanel = StateObject(wrappedValue: TaskPanelViewModel(store: store))
+        FontLoader.registerFonts()
+    }
     
     var body: some View {
         NavigationSplitView(columnVisibility: $visibility) {
-            DaySidebar(tasks: railTasks, untimedCount: untimedCount)
+            TaskSidebar(groups: taskPanel.groups, range: $sidebarRange)
                 .navigationSplitViewColumnWidth(min: 200, ideal: Theme.railWidth, max: 280)
         } detail: {
             detailPane
@@ -32,7 +38,7 @@ struct ContentView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Theme.label)
@@ -43,19 +49,19 @@ struct ContentView: View {
                     
                     HStack(spacing: 4) {
                         Button {
-                            route = .notebook
+                            route = .folder
                         } label: {
                             Image(systemName: "book")
                                 .font(.system(size: 15, weight: .semibold))
                                 .frame(width: 30, height: 30)
                                 .background {
-                                    if isNotebook {
+                                    if isFolder {
                                         Capsule().fill(Theme.accent)
                                     }
                                 }
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(isNotebook ? .white : Theme.label)
+                        .foregroundStyle(isFolder ? .white : Theme.label)
                         
                         Button {
                             route = .tasks
@@ -73,13 +79,14 @@ struct ContentView: View {
                         .foregroundStyle(isTasks ? .white : Theme.label)
                     }
                 }
+                .padding(.horizontal, 8)
             }
             
             ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 12) {
+                HStack(spacing: 8) {
                     if searchExpanded {
                         Image(systemName: "magnifyingglass")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Theme.label)
                         TextField("Search notes, tasks", text: $searchQuery)
                             .textFieldStyle(.plain)
@@ -101,7 +108,7 @@ struct ContentView: View {
                             }
                         } label: {
                             Image(systemName: "magnifyingglass")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 15, weight: .semibold))
                                 .foregroundStyle(Theme.label)
                         }
                         .buttonStyle(.plain)
@@ -113,10 +120,11 @@ struct ContentView: View {
                         Image(systemName: "gearshape")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Theme.label)
-                            .frame(width: 26, height: 26)
+                            .frame(width: 30, height: 30)
                     }
                     .buttonStyle(.plain)
                 }
+                .padding(.horizontal, 8)
                 .onChange(of: searchFocused) { _, isFocused in
                     if !isFocused && searchExpanded {
                         withAnimation(.easeOut(duration: 0.18)) {
@@ -145,10 +153,25 @@ struct ContentView: View {
             noteNames = (try? store.listNotes()) ?? []
             if case .note(let name) = route { loadNote(name) }
         }
+        .onChange(of: noteText) { _, newText in
+            if case .note(let name) = route {
+                taskPanel.update(
+                    lines: newText.components(separatedBy: "\n"),
+                    noteName: name
+                )
+            }
+        }
+        .onChange(of: sidebarRange) { _, newRange in
+            switch newRange {
+                case .today: taskPanel.scope = .today
+                case .week: taskPanel.scope = .thisWeek
+                case .month: taskPanel.scope = .thisMonth
+            }
+        }
     }
     
-    private var isNotebook: Bool {
-        if case .notebook = route { return true }
+    private var isFolder: Bool {
+        if case .folder = route { return true }
         return false
     }
     
@@ -160,33 +183,21 @@ struct ContentView: View {
     @ViewBuilder
     private var detailPane: some View {
         switch route {
-        case .notebook:
-            NotebookGrid(entries: summaryProvider.summaries()) { name in
+        case .folder:
+            FolderGrid(notes: folderNotes) { name in
                 openNote(name)
             }
         case .tasks:
-            TasksPage(tasks: taskAggregator.allTasks()) { name in
+            TasksPage(tasks: allNoteTasks) { name in
                 openNote(name)
             }
         case .note(let name):
-            NoteDetail(title: name, text: $noteText)
+            NoteDetail(
+                title: name,
+                text: $noteText,
+                subject: DefaultNote.allCases.map { $0.rawValue }.contains(name) ? nil : name
+            )
         }
-    }
-    
-    private var railTasks: [RailTask] {
-        noteText.components(separatedBy: "\n").compactMap { line in
-            guard case .task(let task) = parseLine(line), let time = task.time else { return nil }
-            return RailTask(text: task.text, time: time, checked: task.checked)
-        }
-    }
-    
-    private var untimedCount: Int {
-        noteText.components(separatedBy: "\n").filter { line in
-            if case .task(let task) = parseLine(line), task.time == nil, !task.checked {
-                return true
-            }
-            return false
-        }.count
     }
     
     private func loadNote(_ name: String) {
@@ -199,6 +210,34 @@ struct ContentView: View {
         }
         route = .note(name)
         loadNote(name)
+    }
+    
+    private var folderNotes: [(name: String, open: Int, done: Int)] {
+        if case .note(let name) = route {
+            try? store.write(noteText, to: name)
+        }
+        
+        let names = (try? store.listNotes()) ?? []
+        return names.map { name in
+            let text = (try? store.read(name)) ?? ""
+            let lines = text.components(separatedBy: "\n")
+            let tasks = fetchTasks(lines: lines, noteName: name)
+            let open = tasks.filter { !$0.task.checked }.count
+            let done = tasks.filter { $0.task.checked }.count
+            return (name: name, open: open, done: done)
+        }
+    }
+
+    private var allNoteTasks: [NoteTask] {
+        if case .note(let name) = route {
+            try? store.write(noteText, to: name)
+        }
+        let names = (try? store.listNotes()) ?? []
+        return names.flatMap { name in
+            let text = (try? store.read(name)) ?? ""
+            let lines = text.components(separatedBy: "\n")
+            return fetchTasks(lines: lines, noteName: name)
+        }
     }
 }
 

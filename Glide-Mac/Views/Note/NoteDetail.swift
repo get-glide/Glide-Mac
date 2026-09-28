@@ -5,7 +5,7 @@ struct NoteDetail: View {
     let title: String
     @Binding var text: String
     
-    var subject: String? = "cs 2110"
+    var subject: String? = nil
     
     private var subjectColor: Color {
         guard let subject else { return Theme.labelTertiary }
@@ -41,7 +41,7 @@ struct NoteDetail: View {
             }
             
             HStack(alignment: .top, spacing: 24) {
-                NoteOutline(items: MockOutline.items)
+                NoteOutline(text: text)
                     .frame(maxWidth: 140, alignment: .topLeading)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.leading, 20)

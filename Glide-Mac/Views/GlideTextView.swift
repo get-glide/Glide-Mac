@@ -53,50 +53,139 @@ struct GlideTextView: NSViewRepresentable {
     class Coordinator: NSObject, NSTextViewDelegate {
         var parent: GlideTextView
         var isUserEditing: Bool = false
-        
+        var isApplyingStyling: Bool = false
+        var cachedLines: [String] = []
+        var parsedLines: [ParsedLine] = []
+
         init(parent: GlideTextView) {
             self.parent = parent
         }
-        
+
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
+            guard !isApplyingStyling else { return }
+
             isUserEditing = true
             parent.text = textView.string
+
+            let currentLines = textView.string.components(separatedBy: "\n")
+            var changedLineIndex: Int? = nil
+
+            for i in 0..<max(currentLines.count, cachedLines.count) {
+                let currentLine = i < currentLines.count ? currentLines[i] : nil
+                let cachedLine = i < cachedLines.count ? cachedLines[i] : nil
+                if currentLine != cachedLine {
+                    changedLineIndex = i
+                    break
+                }
+            }
+
+            cachedLines = currentLines
+
+            while parsedLines.count < currentLines.count {
+                parsedLines.append(.note(text: "", headingLevel: nil))
+            }
+            while parsedLines.count > currentLines.count {
+                parsedLines.removeLast()
+            }
+
+            if let index = changedLineIndex {
+                guard index < currentLines.count else {
+                    restyle(textView)
+                    isUserEditing = false
+                    return
+                }
+                
+                let changedLineText = currentLines[index]
+                let result = parseLine(changedLineText)
+                parsedLines[index] = result
+
+                if needsCreatedDate(line: changedLineText) {
+                    let lineWithDate = appendCreatedDate(line: changedLineText)
+
+                    let precedingText = cachedLines[..<index].joined(separator: "\n")
+                    let lineStart = precedingText.isEmpty ? 0 : precedingText.count + 1
+                    let lineRange = (textView.string as NSString).lineRange(for: NSRange(location: lineStart, length: 0))
+
+                    isApplyingStyling = true
+                    textView.textStorage?.beginEditing()
+                    textView.textStorage?.replaceCharacters(in: lineRange, with: lineWithDate)
+                    textView.textStorage?.endEditing()
+                    isApplyingStyling = false
+
+                    cachedLines[index] = lineWithDate
+                    parsedLines[index] = parseLine(lineWithDate)
+                    parent.text = textView.string
+                }
+
+                let currentLineText = cachedLines[index]
+                if needsDueDate(line: currentLineText) {
+                    let lineWithDue = appendDueDate(line: currentLineText)
+
+                    let precedingText = cachedLines[..<index].joined(separator: "\n")
+                    let lineStart = precedingText.isEmpty ? 0 : precedingText.count + 1
+                    let lineRange = (textView.string as NSString).lineRange(for: NSRange(location: lineStart, length: 0))
+
+                    isApplyingStyling = true
+                    textView.textStorage?.beginEditing()
+                    textView.textStorage?.replaceCharacters(in: lineRange, with: lineWithDue)
+                    textView.textStorage?.endEditing()
+                    isApplyingStyling = false
+
+                    cachedLines[index] = lineWithDue
+                    parsedLines[index] = parseLine(lineWithDue)
+                    parent.text = textView.string
+                }
+
+                print(parsedLines[index])
+            }
+
             restyle(textView)
             isUserEditing = false
         }
-        
+
+        var isRestyling: Bool = false
+
         func restyle(_ textView: NSTextView) {
+            guard !isApplyingStyling else { return }
+            guard !isRestyling else { return }
             guard let storage = textView.textStorage else { return }
-            let selected = textView.selectedRanges
             
-            let full = storage.string as NSString
+            isRestyling = true
+            let selected = textView.selectedRanges
+            let snapshot = storage.string as NSString
+            let snapshotLength = snapshot.length
+
             storage.beginEditing()
-            full.enumerateSubstrings(in: NSRange(location: 0, length: full.length),
-                                     options: [.byLines, .substringNotRequired]) { _, range, enclosingRange, _ in
-                let lineText = full.substring(with: enclosingRange)
+            snapshot.enumerateSubstrings(
+                in: NSRange(location: 0, length: snapshotLength),
+                options: [.byLines, .substringNotRequired]
+            ) { _, _, enclosingRange, _ in
+                guard enclosingRange.location + enclosingRange.length <= snapshotLength else { return }
+                let lineText = snapshot.substring(with: enclosingRange)
                 let parsed = parseLine(lineText)
                 self.apply(parsed, to: enclosingRange, in: storage)
             }
             storage.endEditing()
-            
+
             textView.selectedRanges = selected
+            isRestyling = false
         }
-        
+
         private func apply(_ line: ParsedLine, to range: NSRange, in storage: NSTextStorage) {
             guard range.length > 0 else { return }
-            
+
             switch line {
             case .task(let task):
                 let color = task.checked ? NSColor(Theme.labelTertiary) : NSColor(Theme.label)
                 storage.addAttribute(.foregroundColor, value: color, range: range)
                 storage.addAttribute(.backgroundColor, value: NSColor(Theme.surfaceTile), range: range)
-                
+
                 let paragraph = NSMutableParagraphStyle()
                 paragraph.paragraphSpacingBefore = 4
                 paragraph.paragraphSpacing = 4
                 storage.addAttribute(.paragraphStyle, value: paragraph, range: range)
-                
+
             case .note(_, let headingLevel):
                 storage.addAttribute(.foregroundColor, value: NSColor(Theme.prose), range: range)
                 let paragraph = NSMutableParagraphStyle()

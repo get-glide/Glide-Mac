@@ -16,12 +16,29 @@ struct RailTask: Identifiable {
     var minutes: Int = 30
 }
 
+extension RailTask {
+    init?(_ noteTask: NoteTask) {
+        guard let time = noteTask.task.time else { return nil }
+        self.text = noteTask.task.text
+        self.time = time
+        self.checked = noteTask.task.checked
+    }
+}
+
 struct TodayRail: View {
     let tasks: [RailTask]
     
-    private let startHour = 9
-    private let endHour = 18
-    private let hourHeight: CGFloat = 46
+    private var startHour: Int {
+        let earliest = tasks.map { $0.time.hour }.min() ?? 9
+        return max(0, earliest - 1)
+    }
+
+    private var endHour: Int {
+        let latest = tasks.map { $0.time.hour }.max() ?? 18
+        return min(23, max(latest + 1, startHour + 6))
+    }
+    
+    private let hourHeight: CGFloat = 60
     private let topInset: CGFloat = 10
     
     var body: some View {
@@ -32,16 +49,18 @@ struct TodayRail: View {
                 .padding(.top, 24)
                 .padding(.leading, 30)
         } else {
-            ZStack(alignment: .topLeading) {
-                hourGrid
-                ForEach(tasks) { task in
-                    taskBlock(task)
-                        .offset(y: yOffset(for: task.time))
-                        .padding(.leading, 30)
+            ScrollView {
+                ZStack(alignment: .topLeading) {
+                    hourGrid
+                    ForEach(tasks) { task in
+                        taskBlock(task)
+                            .offset(y: yOffset(for: task.time))
+                            .padding(.leading, 30)
+                    }
                 }
+                .padding(.top, topInset)
+                .frame(height: CGFloat(endHour - startHour) * hourHeight + topInset, alignment: .top)
             }
-            .padding(.top, topInset)
-            .frame(height: CGFloat(endHour - startHour) * hourHeight + topInset, alignment: .top)
         }
     }
     

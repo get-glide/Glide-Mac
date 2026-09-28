@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlideCore
 
 struct OutlineItem: Identifiable {
     let id = UUID()
@@ -13,18 +14,21 @@ struct OutlineItem: Identifiable {
     let level: Int
 }
 
-struct MockOutline {
-    static let items: [OutlineItem] = [
-        .init(title: "Recursion", level: 0),
-        .init(title: "Base case", level: 1),
-        .init(title: "Call stack", level: 1),
-        .init(title: "Tail calls", level: 1),
-        .init(title: "To do", level: 0),
-    ]
-}
-
 struct NoteOutline: View {
-    let items: [OutlineItem]
+    let text: String
+    
+    private var items: [OutlineItem] {
+        text.components(separatedBy: "\n").compactMap { line in
+            switch parseLine(line) {
+            case .note(let text, let level):
+                guard let level = level else { return nil }
+                return OutlineItem(title: text, level: level - 1)
+            case .task(let task):
+                guard let level = task.headingLevel else { return nil }
+                return OutlineItem(title: task.text, level: level - 1)
+            }
+        }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {

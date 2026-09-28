@@ -7,11 +7,20 @@ enum SidebarRange: String, CaseIterable {
     case month = "This Month"
 }
 
-struct DaySidebar: View {
-    let tasks: [RailTask]
-    let untimedCount: Int
+struct TaskSidebar: View {
+    let groups: [TaskGroup]
+    @Binding var range: SidebarRange
     
-    @State private var range: SidebarRange = .today
+    private var railTasks: [RailTask] {
+        groups
+            .first { $0.title == "scheduled" }?
+            .tasks
+            .compactMap { RailTask($0) } ?? []
+    }
+    
+    private var untimedCount: Int {
+        groups.first { $0.title == "anytime" }?.tasks.count ?? 0
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -43,8 +52,20 @@ struct DaySidebar: View {
             }
             .padding(.bottom, 10)
             
-            TodayRail(tasks: tasks)
+            if range == .today {
+                TodayRail(tasks: railTasks)
+                    .padding(.top, 4)
+            } else {
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(groups.flatMap { $0.tasks }, id: \.lineIndex) { noteTask in
+                        Text(noteTask.task.text)
+                            .font(Theme.ui(12.5))
+                            .foregroundStyle(Theme.label)
+                            .padding(.vertical, 4)
+                    }
+                }
                 .padding(.top, 4)
+            }
             
             GlideTile(padding: 12) {
                 HStack {
