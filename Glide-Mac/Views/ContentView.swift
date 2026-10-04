@@ -11,6 +11,7 @@ struct ContentView: View {
     private let store: NoteStore
     @StateObject private var taskPanel: TaskPanelViewModel
     @State private var sidebarRange: SidebarRange = .today
+    @State private var sidebarSource: TaskSource = .currentNote(name: DefaultNote.today.rawValue)
     @State private var visibility: NavigationSplitViewVisibility = .all
     @State private var noteNames: [String] = []
     @State private var route: Route = .note(DefaultNote.today.rawValue)
@@ -29,7 +30,15 @@ struct ContentView: View {
     
     var body: some View {
         NavigationSplitView(columnVisibility: $visibility) {
-            TaskSidebar(groups: taskPanel.groups, range: $sidebarRange)
+            TaskSidebar(
+                groups: taskPanel.groups,
+                currentNoteName: {
+                    if case .note(let name) = route { return name }
+                    return DefaultNote.today.rawValue
+                }(),
+                range: $sidebarRange,
+                source: $sidebarSource
+            )
                 .navigationSplitViewColumnWidth(min: 200, ideal: Theme.railWidth, max: 280)
         } detail: {
             detailPane
@@ -168,6 +177,9 @@ struct ContentView: View {
                 case .month: taskPanel.scope = .thisMonth
             }
         }
+        .onChange(of: sidebarSource) { _, newSource in
+            taskPanel.source = newSource
+        }
     }
     
     private var isFolder: Bool {
@@ -210,6 +222,11 @@ struct ContentView: View {
         }
         route = .note(name)
         loadNote(name)
+        
+        if case .currentNote = sidebarSource {
+            sidebarSource = .currentNote(name: name)
+            taskPanel.source = sidebarSource
+        }
     }
     
     private var folderNotes: [(name: String, open: Int, done: Int)] {
