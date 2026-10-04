@@ -9,9 +9,12 @@ enum SidebarRange: String, CaseIterable {
 
 struct TaskSidebar: View {
     let groups: [TaskGroup]
+    let noDueDateTasks: [NoteTask]
     let currentNoteName: String
     @Binding var range: SidebarRange
     @Binding var source: TaskSource
+    
+    @State private var noDueDateExpanded: Bool = false
     
     private var railTasks: [RailTask] {
         groups
@@ -107,14 +110,43 @@ struct TaskSidebar: View {
             }
             
             GlideTile(padding: 12) {
-                HStack {
-                    Text("No time set")
-                        .font(Theme.ui(12.5))
-                        .foregroundStyle(Theme.label)
-                    Spacer()
-                    Text("\(untimedCount)")
-                        .font(Theme.mono(11))
-                        .foregroundStyle(Theme.labelSecondary)
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text("No due date")
+                            .font(Theme.ui(12.5))
+                            .foregroundStyle(Theme.label)
+                        Spacer()
+                        Text("\(noDueDateTasks.count)")
+                            .font(Theme.mono(11))
+                            .foregroundStyle(Theme.labelSecondary)
+                        Image(systemName: noDueDateExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Theme.labelSecondary)
+                    }
+                    .contentShape(Rectangle())
+                    .pressable {
+                        withAnimation(.easeInOut(duration: 0.18)) {
+                            noDueDateExpanded.toggle()
+                        }
+                    }
+                    
+                    if noDueDateExpanded {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(noDueDateTasks, id: \.lineIndex) { task in
+                                HStack(spacing: 6) {
+                                    Image(systemName: task.task.checked ? "checkmark.square.fill" : "square")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Theme.labelSecondary)
+                                    Text(task.task.text)
+                                        .font(Theme.ui(12))
+                                        .foregroundStyle(task.task.checked ? Theme.labelTertiary : Theme.label)
+                                        .lineLimit(1)
+                                }
+                            }
+                        }
+                        .padding(.top, 10)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
                 }
             }
             .padding(.top, 12)

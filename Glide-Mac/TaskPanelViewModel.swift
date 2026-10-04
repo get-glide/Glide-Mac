@@ -12,6 +12,7 @@ import GlideCore
 class TaskPanelViewModel: ObservableObject {
     @Published var groups: [TaskGroup] = []
     @Published var currentTask: NoteTask? = nil
+    @Published var noDueDateTasks: [NoteTask] = []
     
     var scope: TaskScope = .today { didSet { refresh() } }
     var source: TaskSource = .currentNote(name: DefaultNote.today.rawValue) { didSet { refresh() } }
@@ -43,6 +44,7 @@ class TaskPanelViewModel: ObservableObject {
             )
             groups = result.groups
             currentTask = result.current
+            noDueDateTasks = result.all.filter { $0.task.dueDate == nil }
         } catch {
             print("TaskPanelViewModel error: \(error)")
         }

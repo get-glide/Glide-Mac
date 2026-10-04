@@ -4,7 +4,7 @@ import GlideCore
 struct NoteDetail: View {
     let title: String
     @Binding var text: String
-    
+    @Binding var showRawOnCursor: Bool
     var subject: String? = nil
     
     private var subjectColor: Color {
@@ -56,7 +56,7 @@ struct NoteDetail: View {
                         }
                         .allowsHitTesting(false)
                     }
-                    GlideTextView(text: $text)
+                    GlideTextView(text: $text, showRawOnCursor: showRawOnCursor)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }

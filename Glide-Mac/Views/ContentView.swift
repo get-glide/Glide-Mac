@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var visibility: NavigationSplitViewVisibility = .all
     @State private var noteNames: [String] = []
     @State private var route: Route = .note(DefaultNote.today.rawValue)
+    @State private var showRawOnCursor: Bool = true
     @State private var noteText: String = ""
     @State private var searchQuery: String = ""
     @State private var searchExpanded = false
@@ -32,6 +33,7 @@ struct ContentView: View {
         NavigationSplitView(columnVisibility: $visibility) {
             TaskSidebar(
                 groups: taskPanel.groups,
+                noDueDateTasks: taskPanel.noDueDateTasks,
                 currentNoteName: {
                     if case .note(let name) = route { return name }
                     return DefaultNote.today.rawValue
@@ -207,8 +209,22 @@ struct ContentView: View {
             NoteDetail(
                 title: name,
                 text: $noteText,
+                showRawOnCursor: $showRawOnCursor,
                 subject: DefaultNote.allCases.map { $0.rawValue }.contains(name) ? nil : name
             )
+            .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showRawOnCursor.toggle()
+                        } label: {
+                            Image(systemName: showRawOnCursor ? "eye.slash" : "eye")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Theme.label)
+                        }
+                        .buttonStyle(.plain)
+                        .help(showRawOnCursor ? "Show formatted on cursor" : "Show raw on cursor")
+                    }
+                }
         }
     }
     

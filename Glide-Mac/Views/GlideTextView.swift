@@ -12,6 +12,8 @@ import GlideCore
 struct GlideTextView: NSViewRepresentable {
     @Binding var text: String
     
+    var showRawOnCursor: Bool
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
     }
@@ -44,8 +46,13 @@ struct GlideTextView: NSViewRepresentable {
         guard let textView = nsView.documentView as? NSTextView else { return }
         guard !context.coordinator.isUserEditing else { return }
         
+        let rawChanged = context.coordinator.showRawOnCursor != showRawOnCursor
+        context.coordinator.showRawOnCursor = showRawOnCursor
+        
         if textView.string != text {
             textView.string = text
+            context.coordinator.restyle(textView)
+        } else if rawChanged {
             context.coordinator.restyle(textView)
         }
     }
@@ -56,6 +63,8 @@ struct GlideTextView: NSViewRepresentable {
         var isApplyingStyling: Bool = false
         var cachedLines: [String] = []
         var parsedLines: [ParsedLine] = []
+        var cursorLineIndex: Int? = nil
+        var showRawOnCursor: Bool = true
 
         init(parent: GlideTextView) {
             self.parent = parent
@@ -143,6 +152,21 @@ struct GlideTextView: NSViewRepresentable {
             restyle(textView)
             isUserEditing = false
         }
+        
+        func textViewDidChangeSelection(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            let location = textView.selectedRange().location
+            let lines = textView.string.components(separatedBy: "\n")
+            var charCount = 0
+            for (i, line) in lines.enumerated() {
+                charCount += line.count + 1
+                if location < charCount {
+                    cursorLineIndex = i
+                    break
+                }
+            }
+            restyle(textView)
+        }
 
         var isRestyling: Bool = false
 
@@ -157,14 +181,17 @@ struct GlideTextView: NSViewRepresentable {
             let snapshotLength = snapshot.length
 
             storage.beginEditing()
+            var lineIndex = 0
             snapshot.enumerateSubstrings(
                 in: NSRange(location: 0, length: snapshotLength),
                 options: [.byLines, .substringNotRequired]
             ) { _, _, enclosingRange, _ in
                 guard enclosingRange.location + enclosingRange.length <= snapshotLength else { return }
+                let isCursorLine = lineIndex == self.cursorLineIndex
                 let lineText = snapshot.substring(with: enclosingRange)
                 let parsed = parseLine(lineText)
-                self.apply(parsed, to: enclosingRange, in: storage)
+                self.apply(parsed, to: enclosingRange, in: storage, isCursorLine: isCursorLine)
+                lineIndex += 1
             }
             storage.endEditing()
 
@@ -172,8 +199,16 @@ struct GlideTextView: NSViewRepresentable {
             isRestyling = false
         }
 
-        private func apply(_ line: ParsedLine, to range: NSRange, in storage: NSTextStorage) {
+        private func apply(_ line: ParsedLine, to range: NSRange, in storage: NSTextStorage,  isCursorLine: Bool) {
             guard range.length > 0 else { return }
+            
+            if isCursorLine && showRawOnCursor {
+                storage.setAttributes([
+                    .foregroundColor: NSColor(Theme.label),
+                    .font: NSFont.monospacedSystemFont(ofSize: 14, weight: .regular)
+                ], range: range)
+                return
+            }
 
             switch line {
             case .task(let task):
