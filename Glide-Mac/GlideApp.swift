@@ -13,13 +13,18 @@ struct GlideApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main") {
             ContentView()
                 .frame(minWidth: 940, minHeight: 620)
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .defaultSize(width: 1280, height: 820)
+        
+        MenuBarExtra("Glide", systemImage: "paperplane.fill") {
+            MiniView()
+        }
+        .menuBarExtraStyle(.window)
     }
 }
 
