@@ -5,94 +5,66 @@ struct NoteDetail: View {
     let title: String
     @Binding var text: String
     @Binding var showRawOnCursor: Bool
+    var subject: String? = nil
     
-    private let gutter: CGFloat = 40
-    private let gutterGap: CGFloat = 18
+    private var subjectColor: Color {
+        guard let subject else { return Theme.labelTertiary }
+        let hues: [Color] = [
+            Color(hex: 0x8B96F5),
+            Color(hex: 0xF0865C),
+            Color(hex: 0x45C3A3),
+            Color(hex: 0xF0B455),
+        ]
+        let index = abs(subject.hashValue) % hues.count
+        return hues[index]
+    }
     
     var body: some View {
-        VStack(spacing: 0) {
-            noteBar
+        VStack(alignment: .leading, spacing: 0) {
             
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline, spacing: gutterGap) {
-                    Text("#")
-                        .font(Theme.mono(18))
-                        .foregroundStyle(Theme.labelQuaternary)
-                        .frame(width: gutter, alignment: .trailing)
-                        .accessibilityHidden(true)
-                    Text(title)
-                        .font(Theme.display(48))
-                        .tracking(-1.7)
-                        .foregroundStyle(Theme.label)
-                        .lineLimit(2)
-                }
-                
-                if !counts.isEmpty {
+            if let subject {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(subjectColor)
+                        .frame(width: 6, height: 6)
+                    Text(subject)
+                        .font(Theme.mono(11))
+                        .foregroundStyle(subjectColor)
                     Text(counts)
-                        .font(Theme.mono(12))
+                        .font(Theme.mono(11))
                         .foregroundStyle(Theme.labelTertiary)
-                        .padding(.leading, gutter + gutterGap)
-                        .padding(.top, 8)
+                    Spacer()
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 12)
+            }
+            
+            HStack(alignment: .top, spacing: 24) {
+                NoteOutline(text: text)
+                    .frame(maxWidth: 140, alignment: .topLeading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 20)
+                    .padding(.top, 2)
                 
                 ZStack(alignment: .topLeading) {
                     if text.isEmpty {
-                        Text("Start writing, or type [ ] to add a task")
-                            .font(Theme.ui(15))
-                            .foregroundStyle(Theme.labelQuaternary)
-                            .allowsHitTesting(false)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Start writing, or type [ ] to add a task")
+                                .font(Theme.ui(13))
+                                .foregroundStyle(Theme.labelQuaternary)
+                        }
+                        .allowsHitTesting(false)
                     }
                     GlideTextView(text: $text, showRawOnCursor: showRawOnCursor)
                 }
-                .padding(.leading, gutter + gutterGap)
-                .padding(.top, 22)
-                .frame(maxHeight: .infinity, alignment: .topLeading)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
-            .frame(maxWidth: 720, maxHeight: .infinity, alignment: .topLeading)
-            .padding(.horizontal, 48)
-            .padding(.top, 40)
-            .padding(.bottom, 24)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 14)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Theme.surfaceApp)
-    }
-    
-    private var noteBar: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "doc.text")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(Theme.labelSecondary)
-            Text(title)
-                .font(Theme.ui(13))
-                .fontWeight(.semibold)
-                .foregroundStyle(Theme.label)
-                .lineLimit(1)
-            
-            Spacer()
-            
-            Text("\(wordCount) words")
-                .font(Theme.mono(11))
-                .foregroundStyle(Theme.labelTertiary)
-            
-            Button {
-                showRawOnCursor.toggle()
-            } label: {
-                Image(systemName: showRawOnCursor ? "eye.slash" : "eye")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Theme.labelSecondary)
-                    .frame(width: 28, height: 28)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .padding(.leading, 8)
-            .help(showRawOnCursor ? "Show formatted on cursor" : "Show raw on cursor")
-        }
-        .padding(.horizontal, 14)
-        .frame(height: 42)
-        .overlay(alignment: .bottom) {
-            Rectangle().fill(Theme.separator).frame(height: 1)
-        }
     }
     
     private var counts: String {
@@ -105,9 +77,5 @@ struct NoteDetail: View {
         }
         if open == 0 && done == 0 { return "" }
         return "\(open) open · \(done) done"
-    }
-    
-    private var wordCount: Int {
-        text.split(whereSeparator: { $0.isWhitespace }).count
     }
 }

@@ -11,7 +11,6 @@ import GlideCore
 @main
 struct GlideApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @AppStorage("showMenuBarExtra") private var showMenuBar = true
     
     var body: some Scene {
         WindowGroup(id: "main") {
@@ -21,11 +20,8 @@ struct GlideApp: App {
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
         .defaultSize(width: 1280, height: 820)
-        .commands {
-            CommandGroup(replacing: .newItem) {}
-        }
         
-        MenuBarExtra("Glide", systemImage: "paperplane.fill", isInserted: $showMenuBar) {
+        MenuBarExtra("Glide", systemImage: "paperplane.fill") {
             MiniView()
         }
         .menuBarExtraStyle(.window)

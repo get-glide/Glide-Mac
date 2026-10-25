@@ -5,101 +5,157 @@ enum SidebarRange: String, CaseIterable {
     case today = "Today"
     case week = "Week"
     case month = "Month"
-    
-    var scope: TaskScope {
-        switch self {
-        case .today: .today
-        case .week: .thisWeek
-        case .month: .thisMonth
-        }
-    }
 }
 
 struct TaskSidebar: View {
     let groups: [TaskGroup]
     let noDueDateTasks: [NoteTask]
     let currentNoteName: String
-    let upNext: NoteTask?
     @Binding var range: SidebarRange
     @Binding var source: TaskSource
-    let onOpen: (String) -> Void
     
-    @State private var selectedDay = Calendar.current.startOfDay(for: .now)
+    @State private var noDueDateExpanded: Bool = false
     
-    private var monthOpen: Bool { range == .month }
+    private var railTasks: [RailTask] {
+        groups
+            .first { $0.title == "scheduled" }?
+            .tasks
+            .compactMap { RailTask($0) } ?? []
+    }
+    
+    private var untimedCount: Int {
+        groups.first { $0.title == "anytime" }?.tasks.count ?? 0
+    }
+    
+    private var isCurrentNote: Bool {
+        if case .currentNote = source { return true }
+        return false
+    }
     
     var body: some View {
-        let tasksByDay = groups.flatMap(\.tasks).groupedByDay()
-        
         VStack(alignment: .leading, spacing: 0) {
-            header(tasksByDay)
-            
-            Group {
-                if monthOpen {
-                    TimelineDayList(day: selectedDay, tasks: tasksByDay[selectedDay] ?? [], onOpen: onOpen)
-                } else {
-                    TimelineRail(tasksByDay: tasksByDay, noDueDateTasks: noDueDateTasks, upNext: upNext, onOpen: onOpen)
-                }
-            }
-            .transition(.opacity)
-        }
-        .padding(.leading, 14)
-        .padding(.trailing, 6)
-        .padding(.top, 10)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-    
-    private func header(_ tasksByDay: [Date: [NoteTask]]) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text("TIMELINE")
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(range.rawValue)
+                    .font(Theme.ui(14))
+                    .foregroundStyle(Theme.label)
+                
+                Text(Date.now.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated)))
                     .font(Theme.mono(11))
-                    .fontWeight(.semibold)
-                    .tracking(0.9)
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(Theme.labelTertiary)
+                
                 Spacer()
-                HStack(spacing: 2) {
-                    sourceButton("This note", for: .currentNote(name: currentNoteName))
-                    sourceButton("All notes", for: .allNotes)
+            }
+            .frame(height: Theme.barHeight)
+            
+            HStack(spacing: 6) {
+                ForEach(SidebarRange.allCases, id: \.self) { option in
+                    Text(option.rawValue)
+                        .font(Theme.ui(11.5))
+                        .foregroundStyle(range == option ? Theme.label : Theme.labelSecondary)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 5)
+                        .background(range == option ? Theme.surfaceTile : .clear)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .pressable {
+                            withAnimation(.easeInOut(duration: 0.18)) {
+                                range = option
+                            }
+                        }
                 }
-                .padding(2)
-                .background(Theme.card, in: Capsule())
+            }
+            .padding(.bottom, 10)
+            
+            HStack(spacing: 6) {
+                Text("This Note")
+                    .font(Theme.ui(11.5))
+                    .foregroundStyle(isCurrentNote ? Theme.label : Theme.labelSecondary)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(isCurrentNote ? Theme.surfaceTile : .clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .pressable {
+                        withAnimation(.easeInOut(duration: 0.18)) {
+                            source = .currentNote(name: currentNoteName)
+                        }
+                    }
+                
+                Text("All Notes")
+                    .font(Theme.ui(11.5))
+                    .foregroundStyle(source == .allNotes ? Theme.label : Theme.labelSecondary)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
+                    .background(source == .allNotes ? Theme.surfaceTile : .clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .pressable {
+                        withAnimation(.easeInOut(duration: 0.18)) {
+                            source = .allNotes
+                        }
+                    }
+            }
+            .padding(.bottom, 10)
+            
+            if range == .today {
+                TodayRail(tasks: railTasks)
+                    .padding(.top, 4)
+            } else {
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(groups.flatMap { $0.tasks }, id: \.lineIndex) { noteTask in
+                        Text(noteTask.task.text)
+                            .font(Theme.ui(12.5))
+                            .foregroundStyle(Theme.label)
+                            .padding(.vertical, 4)
+                    }
+                }
+                .padding(.top, 4)
             }
             
-            Text(monthOpen
-                 ? Date.now.formatted(.dateTime.month(.wide))
-                 : Date.now.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
-            .font(Theme.display(30))
-            .tracking(-0.9)
-            .foregroundStyle(Theme.label)
-            .contentTransition(.opacity)
+            GlideTile(padding: 12) {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Text("No due date")
+                            .font(Theme.ui(12.5))
+                            .foregroundStyle(Theme.label)
+                        Spacer()
+                        Text("\(noDueDateTasks.count)")
+                            .font(Theme.mono(11))
+                            .foregroundStyle(Theme.labelSecondary)
+                        Image(systemName: noDueDateExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(Theme.labelSecondary)
+                    }
+                    .contentShape(Rectangle())
+                    .pressable {
+                        withAnimation(.easeInOut(duration: 0.18)) {
+                            noDueDateExpanded.toggle()
+                        }
+                    }
+                    
+                    if noDueDateExpanded {
+                        VStack(alignment: .leading, spacing: 6) {
+                            ForEach(noDueDateTasks, id: \.lineIndex) { task in
+                                HStack(spacing: 6) {
+                                    Image(systemName: task.task.checked ? "checkmark.square.fill" : "square")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(Theme.labelSecondary)
+                                    Text(task.task.text)
+                                        .font(Theme.ui(12))
+                                        .foregroundStyle(task.task.checked ? Theme.labelTertiary : Theme.label)
+                                        .lineLimit(1)
+                                }
+                            }
+                        }
+                        .padding(.top, 10)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+                }
+            }
+            .padding(.top, 12)
             
-            CalendarCard(tasksByDay: tasksByDay, range: $range, selectedDay: $selectedDay)
-                .padding(.top, 8)
+            Spacer()
         }
-        .padding(.vertical, 8)
-        .padding(.bottom, 6)
-    }
-    
-    private func sourceButton(_ label: String, for value: TaskSource) -> some View {
-        let isOn: Bool = switch (source, value) {
-        case (.currentNote, .currentNote), (.allNotes, .allNotes): true
-        default: false
-        }
-        
-        return Button {
-            withAnimation(.easeInOut(duration: 0.18)) { source = value }
-        } label: {
-            Text(label)
-                .font(Theme.ui(11))
-                .fontWeight(isOn ? .semibold : .regular)
-                .foregroundStyle(isOn ? Color.white : Theme.chromeText)
-                .padding(.horizontal, 8)
-                .frame(height: 20)
-                .background(isOn ? Color.white.opacity(0.16) : .clear, in: Capsule())
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isOn ? .isSelected : [])
+        .padding(.horizontal, 16)
+        .padding(.bottom, 14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Theme.surfaceSidebar)
     }
 }

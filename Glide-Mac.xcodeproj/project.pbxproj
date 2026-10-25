@@ -18,6 +18,12 @@
 		E828C1C330432A4E0030EB09 /* Exceptions for "Glide-Mac" folder in "Glide-Mac" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"Fonts & Recources/Bricolage_Grotesque/OFL.txt",
+				"Fonts & Recources/Bricolage_Grotesque/README.txt",
+				"Fonts & Recources/Hanken_Grotesk/OFL.txt",
+				"Fonts & Recources/Hanken_Grotesk/README.txt",
+				"Fonts & Recources/JetBrains_Mono/OFL.txt",
+				"Fonts & Recources/JetBrains_Mono/README.txt",
 				Info.plist,
 			);
 			target = E87A78ED2FEC4C3B002CA22F /* Glide-Mac */;
@@ -97,7 +103,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2650;
-				LastUpgradeCheck = 2710;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					E87A78ED2FEC4C3B002CA22F = {
 						CreatedOnToolsVersion = 26.5;
@@ -181,7 +187,6 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 6ASQXB4L83;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -207,7 +212,6 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -247,7 +251,6 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 6ASQXB4L83;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -266,7 +269,6 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -281,7 +283,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XVV7MKB992;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -319,7 +320,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = XVV7MKB992;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
