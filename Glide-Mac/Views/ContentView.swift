@@ -10,18 +10,20 @@ enum Route: Hashable {
 struct ContentView: View {
     private let store: NoteStore
     @StateObject private var taskPanel: TaskPanelViewModel
-    @State private var sidebarRange: SidebarRange = .today
+    @State private var sidebarRange: SidebarRange = .week
     @State private var sidebarSource: TaskSource = .currentNote(name: DefaultNote.today.rawValue)
-    @State private var visibility: NavigationSplitViewVisibility = .all
     @State private var noteNames: [String] = []
     @State private var route: Route = .note(DefaultNote.today.rawValue)
-    @State private var showRawOnCursor: Bool = true
-    @State private var noteText: String = ""
-    @State private var searchQuery: String = ""
+    @State private var showRawOnCursor = true
+    @State private var noteText = ""
+    @State private var searchQuery = ""
     @State private var searchExpanded = false
     @State private var showingSettings = false
+    @State private var showingNewNote = false
     @FocusState private var searchFocused: Bool
-
+    @State private var openTabs = [DefaultNote.today.rawValue]
+    @State private var layout = TimelineLayout()
+    
     init() {
         let store = try! NoteStore.makeDefault()
         self.store = store
@@ -30,130 +32,66 @@ struct ContentView: View {
     }
     
     var body: some View {
-        NavigationSplitView(columnVisibility: $visibility) {
-            TaskSidebar(
-                groups: taskPanel.groups,
-                noDueDateTasks: taskPanel.noDueDateTasks,
-                currentNoteName: {
-                    if case .note(let name) = route { return name }
-                    return DefaultNote.today.rawValue
-                }(),
-                range: $sidebarRange,
-                source: $sidebarSource
+        VStack(spacing: 0) {
+            TopBar(
+                layout: layout,
+                route: route,
+                openTabs: openTabs,
+                onRoute: { route = $0 },
+                onSelectTab: openNote,
+                onCloseTab: closeTab,
+                onToggleSidebar: { withAnimation(.snappy(duration: 0.25)) { layout.visible.toggle() } },
+                onNewNote: { reloadNoteNames(); showingNewNote = true },
+                onQuickOpen: openQuickOpen,
+                onSettings: { setSettings(!showingSettings) }
             )
-                .navigationSplitViewColumnWidth(min: 200, ideal: Theme.railWidth, max: 280)
-        } detail: {
-            detailPane
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .background(Theme.surfaceApp)
-        }
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                HStack(spacing: 8) {
-                    Image(systemName: "paperplane.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.label)
-                    
-                    Text("GLIDE")
-                        .font(Theme.display(13))
-                        .foregroundStyle(Theme.label)
-                    
-                    HStack(spacing: 4) {
-                        Button {
-                            route = .folder
-                        } label: {
-                            Image(systemName: "book")
-                                .font(.system(size: 15, weight: .semibold))
-                                .frame(width: 30, height: 30)
-                                .background {
-                                    if isFolder {
-                                        Capsule().fill(Theme.accent)
-                                    }
-                                }
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(isFolder ? .white : Theme.label)
-                        
-                        Button {
-                            route = .tasks
-                        } label: {
-                            Image(systemName: "checkmark.square")
-                                .font(.system(size: 15, weight: .semibold))
-                                .frame(width: 30, height: 30)
-                                .background {
-                                    if isTasks {
-                                        Capsule().fill(Theme.accent)
-                                    }
-                                }
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(isTasks ? .white : Theme.label)
-                    }
-                }
-                .padding(.horizontal, 8)
-            }
             
-            ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 8) {
-                    if searchExpanded {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Theme.label)
-                        TextField("Search notes, tasks", text: $searchQuery)
-                            .textFieldStyle(.plain)
-                            .font(Theme.ui(12.5))
-                            .foregroundStyle(Theme.label)
-                            .focused($searchFocused)
-                            .frame(width: 170)
-                            .onExitCommand {
-                                withAnimation(.easeOut(duration: 0.18)) {
-                                    searchExpanded = false
-                                    searchQuery = ""
-                                }
-                            }
-                    } else {
-                        Button {
-                            searchExpanded = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                searchFocused = true
-                            }
-                        } label: {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(Theme.label)
-                        }
-                        .buttonStyle(.plain)
+            HStack(spacing: 0) {
+                if layout.visible {
+                    TimelineColumn(layout: layout) {
+                        TaskSidebar(
+                            groups: taskPanel.groups,
+                            noDueDateTasks: taskPanel.noDueDateTasks,
+                            currentNoteName: currentNoteName,
+                            upNext: upNext,
+                            range: $sidebarRange,
+                            source: $sidebarSource,
+                            onOpen: openNote
+                        )
                     }
+                    .transition(.move(edge: .leading).combined(with: .opacity))
                     
-                    Button {
-                        showingSettings.toggle()
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Theme.label)
-                            .frame(width: 30, height: 30)
-                    }
-                    .buttonStyle(.plain)
+                    ResizeHandle(layout: layout)
+                        .transition(.opacity)
                 }
-                .padding(.horizontal, 8)
-                .onChange(of: searchFocused) { _, isFocused in
-                    if !isFocused && searchExpanded {
-                        withAnimation(.easeOut(duration: 0.18)) {
-                            searchExpanded = false
-                            searchQuery = ""
-                        }
-                    }
-                }
+                
+                detailPane
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .background(Theme.surfaceApp)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .padding(.leading, layout.visible ? 0 : 10)
+            .padding([.trailing, .bottom], 10)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Theme.chrome)
+        .background(TrafficLights())
+        .ignoresSafeArea(.container, edges: .top)
+        .preferredColorScheme(.dark)
+        .overlay {
+            if searchExpanded {
+                QuickOpen(query: $searchQuery, results: quickResults, openTabs: openTabs,
+                          focus: $searchFocused, onPick: pickQuickResult, onClose: closeQuickOpen)
+            }
+        }
+        .overlay {
+            if showingNewNote {
+                NewNotePanel(existing: noteNames, onCreate: createNote, onClose: { showingNewNote = false })
             }
         }
         .overlay {
             if showingSettings {
-                ZStack {
-                    Color.black.opacity(0.3)
-                        .onTapGesture { withAnimation(.easeOut(duration: 0.2)) { showingSettings = false } }
-                    SettingsView(onClose: { withAnimation(.easeOut(duration: 0.2)) { showingSettings = false } })
-                        .frame(width: 380, height: 480)
-                }
+                SettingsView(folder: store.directory, onClose: { setSettings(false) })
             }
         }
         .onTapGesture {
@@ -161,80 +99,131 @@ struct ContentView: View {
         }
         .onAppear {
             try? store.createDefaultNotesIfNeeded()
-            noteNames = (try? store.listNotes()) ?? []
-            if case .note(let name) = route { loadNote(name) }
+            reloadNoteNames()
+            loadNote(currentNoteName)
+            taskPanel.scope = sidebarRange.scope
         }
         .onChange(of: noteText) { _, newText in
-            if case .note(let name) = route {
-                taskPanel.update(
-                    lines: newText.components(separatedBy: "\n"),
-                    noteName: name
-                )
-            }
+            guard case .note(let name) = route else { return }
+            taskPanel.update(lines: newText.components(separatedBy: "\n"), noteName: name)
         }
-        .onChange(of: sidebarRange) { _, newRange in
-            switch newRange {
-                case .today: taskPanel.scope = .today
-                case .week: taskPanel.scope = .thisWeek
-                case .month: taskPanel.scope = .thisMonth
-            }
-        }
-        .onChange(of: sidebarSource) { _, newSource in
-            taskPanel.source = newSource
-        }
+        .onChange(of: sidebarRange) { taskPanel.scope = $1.scope }
+        .onChange(of: sidebarSource) { taskPanel.source = $1 }
     }
     
-    private var isFolder: Bool {
-        if case .folder = route { return true }
-        return false
+    private var currentNoteName: String {
+        if case .note(let name) = route { return name }
+        return DefaultNote.today.rawValue
     }
     
-    private var isTasks: Bool {
-        if case .tasks = route { return true }
-        return false
+    private var upNext: NoteTask? {
+        currentTask(from: taskPanel.groups.flatMap(\.tasks).filter {
+            $0.task.dueDate.map(Calendar.current.isDateInToday) ?? false
+        })
     }
     
     @ViewBuilder
     private var detailPane: some View {
         switch route {
         case .folder:
-            FolderGrid(notes: folderNotes) { name in
-                openNote(name)
-            }
+            FolderGrid(notes: folderNotes, onOpen: openNote)
         case .tasks:
-            TasksPage(tasks: allNoteTasks) { name in
-                openNote(name)
-            }
+            TasksPage(tasks: allNoteTasks, onOpen: openNote)
         case .note(let name):
-            NoteDetail(
-                title: name,
-                text: $noteText,
-                showRawOnCursor: $showRawOnCursor,
-                subject: DefaultNote.allCases.map { $0.rawValue }.contains(name) ? nil : name
-            )
-            .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            showRawOnCursor.toggle()
-                        } label: {
-                            Image(systemName: showRawOnCursor ? "eye.slash" : "eye")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(Theme.label)
-                        }
-                        .buttonStyle(.plain)
-                        .help(showRawOnCursor ? "Show formatted on cursor" : "Show raw on cursor")
-                    }
-                }
+            NoteDetail(title: name, text: $noteText, showRawOnCursor: $showRawOnCursor)
         }
+    }
+    
+    private var quickResults: [QuickOpenResult] {
+        let query = searchQuery.trimmingCharacters(in: .whitespaces)
+        let names = noteNames
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+            .filter { query.isEmpty || $0.localizedCaseInsensitiveContains(query) }
+            .map { QuickOpenResult(noteName: $0, line: nil) }
+        guard !query.isEmpty else { return names }
+        return names + ((try? store.search(query)) ?? []).map { QuickOpenResult(noteName: $0.noteName, line: $0.line) }
+    }
+    
+    private var folderNotes: [(name: String, open: Int, done: Int)] {
+        saveCurrentNote()
+        return ((try? store.listNotes()) ?? []).map { name in
+            let tasks = tasks(in: name)
+            let done = tasks.filter(\.task.checked).count
+            return (name: name, open: tasks.count - done, done: done)
+        }
+    }
+    
+    private var allNoteTasks: [NoteTask] {
+        saveCurrentNote()
+        return ((try? store.listNotes()) ?? []).flatMap(tasks(in:))
+    }
+    
+    private func tasks(in name: String) -> [NoteTask] {
+        fetchTasks(lines: ((try? store.read(name)) ?? "").components(separatedBy: "\n"), noteName: name)
+    }
+    
+    private func saveCurrentNote() {
+        if case .note(let name) = route {
+            try? store.write(noteText, to: name)
+        }
+    }
+    
+    private func reloadNoteNames() {
+        noteNames = (try? store.listNotes()) ?? []
     }
     
     private func loadNote(_ name: String) {
         noteText = (try? store.read(name)) ?? ""
     }
     
+    private func setSettings(_ open: Bool) {
+        withAnimation(.easeOut(duration: 0.2)) { showingSettings = open }
+    }
+    
+    private func createNote(_ name: String) -> Bool {
+        guard (try? store.write("", to: name)) != nil else { return false }
+        reloadNoteNames()
+        showingNewNote = false
+        openNote(name)
+        return true
+    }
+    
+    private func openQuickOpen() {
+        saveCurrentNote()
+        reloadNoteNames()
+        searchQuery = ""
+        searchExpanded = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { searchFocused = true }
+    }
+    
+    private func closeQuickOpen() {
+        searchExpanded = false
+        searchQuery = ""
+    }
+    
+    private func pickQuickResult(_ name: String) {
+        closeQuickOpen()
+        openNote(name)
+    }
+    
+    private func closeTab(_ name: String) {
+        guard let index = openTabs.firstIndex(of: name) else { return }
+        let wasActive = route == .note(name)
+        openTabs.remove(at: index)
+        guard wasActive else { return }
+        
+        if openTabs.isEmpty {
+            saveCurrentNote()
+            route = .folder
+        } else {
+            openNote(openTabs[max(0, index - 1)])
+        }
+    }
+    
     private func openNote(_ name: String) {
-        if case .note(let current) = route {
-            try? store.write(noteText, to: current)
+        saveCurrentNote()
+        if !openTabs.contains(name) {
+            openTabs.append(name)
         }
         route = .note(name)
         loadNote(name)
@@ -244,36 +233,9 @@ struct ContentView: View {
             taskPanel.source = sidebarSource
         }
     }
-    
-    private var folderNotes: [(name: String, open: Int, done: Int)] {
-        if case .note(let name) = route {
-            try? store.write(noteText, to: name)
-        }
-        
-        let names = (try? store.listNotes()) ?? []
-        return names.map { name in
-            let text = (try? store.read(name)) ?? ""
-            let lines = text.components(separatedBy: "\n")
-            let tasks = fetchTasks(lines: lines, noteName: name)
-            let open = tasks.filter { !$0.task.checked }.count
-            let done = tasks.filter { $0.task.checked }.count
-            return (name: name, open: open, done: done)
-        }
-    }
-
-    private var allNoteTasks: [NoteTask] {
-        if case .note(let name) = route {
-            try? store.write(noteText, to: name)
-        }
-        let names = (try? store.listNotes()) ?? []
-        return names.flatMap { name in
-            let text = (try? store.read(name)) ?? ""
-            let lines = text.components(separatedBy: "\n")
-            return fetchTasks(lines: lines, noteName: name)
-        }
-    }
 }
 
 #Preview {
     ContentView()
+        .frame(width: 1280, height: 820)
 }

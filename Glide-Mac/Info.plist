@@ -2,12 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>UIAppFonts</key>
-	<array>
-		<string>BricolageGrotesque_24pt_SemiCondensed-ExtraBold.ttf</string>
-		<string>HankenGrotesk-Regular.ttf</string>
-		<string>HankenGrotesk-Medium.ttf</string>
-		<string>JetBrainsMono-Regular.ttf</string>
-	</array>
+	<key>GlideFeedbackURL</key>
+	<string>https://docs.google.com/forms/d/e/1FAIpQLScFoih-BI-eSlZUHDfQQWJdcsFl7Vf5xIWLSqGACHhSHehLpw/viewform</string>
 </dict>
 </plist>
