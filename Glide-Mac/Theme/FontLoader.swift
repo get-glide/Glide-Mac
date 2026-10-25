@@ -10,21 +10,13 @@ import CoreText
 
 enum FontLoader {
     static func registerFonts() {
-        let names = [
-            "BricolageGrotesque_24pt_SemiCondensed-ExtraBold",
-            "HankenGrotesk-Regular",
-            "HankenGrotesk-Medium",
-            "JetBrainsMono-Regular"
-        ]
-        for name in names {
+        for name in ["Geist-VariableFont_wght", "GeistMono-VariableFont_wght"] {
             guard let url = Bundle.main.url(forResource: name, withExtension: "ttf") else {
                 print("MISSING:", name)
                 continue
             }
             var error: Unmanaged<CFError>?
-            if CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error) {
-                print("REGISTERED:", name)
-            } else {
+            if !CTFontManagerRegisterFontsForURL(url as CFURL, .process, &error) {
                 print("FAILED:", name, error.debugDescription)
             }
         }
