@@ -42,12 +42,10 @@ struct AddTaskField: View {
 }
 
 enum TaskEntry {
-    static func line(from text: String) -> String {
-        var line = text
+    static func line(from text: String, defaultDue: Date? = nil) -> String {
+        var line = text.trimmingCharacters(in: .whitespaces)
         if case .note = parseLine(line) { line = "[] " + line }
-        if needsCreatedDate(line: line) { line = appendCreatedDate(line: line) }
-        if needsDueDate(line: line) { line = appendDueDate(line: line) }
-        return line
+        return finalizeLine(line, defaultDue: defaultDue)
     }
 }
 

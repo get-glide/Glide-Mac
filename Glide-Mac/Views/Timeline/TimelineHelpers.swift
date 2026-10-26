@@ -36,11 +36,14 @@ extension Array where Element == NoteTask {
 
 private func railOrder(_ a: NoteTask, _ b: NoteTask) -> Bool {
     switch (a.task.time, b.task.time) {
-    case let (x?, y?): return x.railMinutes < y.railMinutes
+    case let (x?, y?):
+        if x.railMinutes != y.railMinutes { return x.railMinutes < y.railMinutes }
     case (_?, nil): return true
     case (nil, _?): return false
-    default: return a.lineIndex < b.lineIndex
+    default: break
     }
+    if a.noteName != b.noteName { return a.noteName < b.noteName }
+    return a.lineIndex < b.lineIndex
 }
 
 extension Calendar {

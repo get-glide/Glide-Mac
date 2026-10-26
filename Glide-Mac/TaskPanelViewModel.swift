@@ -14,32 +14,44 @@ class TaskPanelViewModel: ObservableObject {
     @Published var currentTask: NoteTask? = nil
     @Published var noDueDateTasks: [NoteTask] = []
     
-    var scope: TaskScope = .today { didSet { refresh() } }
-    var source: TaskSource = .currentNote(name: DefaultNote.today.rawValue) { didSet { refresh() } }
+    var scope: TaskScope { didSet { refresh() } }
+    var source: TaskSource { didSet { refresh() } }
     
     private var currentLines: [String] = []
     private var currentNoteName: String = DefaultNote.today.rawValue
     private let store: NoteStore
     
-    init(store: NoteStore) {
+    init(
+        store: NoteStore,
+        scope: TaskScope = .today,
+        source: TaskSource = .currentNote(name: DefaultNote.today.rawValue),
+        noteName: String = DefaultNote.today.rawValue
+    ) {
         self.store = store
+        self.scope = scope
+        self.source = source
+        self.currentNoteName = noteName
         refresh()
     }
     
     func update(lines: [String], noteName: String) {
         currentLines = lines
         currentNoteName = noteName
-        source = .currentNote(name: noteName)
         refresh()
     }
     
-    private func refresh() {
+    func refresh() {
+        let effectiveSource: TaskSource
+        switch source {
+            case .currentNote: effectiveSource = .currentNote(name: currentNoteName)
+            case .allNotes: effectiveSource = .allNotes
+        }
         do {
             let result = try getTaskPanel(
                 currentLines: currentLines,
                 currentNoteName: currentNoteName,
                 scope: scope,
-                source: source,
+                source: effectiveSource,
                 store: store
             )
             groups = result.groups

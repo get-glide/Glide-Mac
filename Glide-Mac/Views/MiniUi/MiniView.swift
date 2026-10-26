@@ -13,7 +13,7 @@ import GlideCore
 // The three views the mini window can show. Raw values are stored in
 // `@AppStorage`, so renaming a case resets the user's last-used view.
 enum MiniTab: String, CaseIterable {
-    case notes, timeline, month
+    case notes, timeline
 }
 
 // Root of the menu bar mini window.
@@ -23,26 +23,31 @@ enum MiniTab: String, CaseIterable {
 // replaced by the file's contents the next time the view reloads.
 struct MiniView: View {
     private let store: NoteStore
-    @StateObject private var weekPanel: TaskPanelViewModel
-    @StateObject private var monthPanel: TaskPanelViewModel
-    
+    @StateObject private var panel: TaskPanelViewModel
+
     @AppStorage("miniTab") private var tab: MiniTab = .timeline
-    @State private var noteName: String = DefaultNote.today.rawValue
-    @State private var noteText: String = ""
+    @AppStorage("miniRange") private var range: SidebarRange = .week
+    @State private var noteName = DefaultNote.today.rawValue
+    @State private var noteText = ""
+    @State private var loadedText = ""
     @State private var noteNames: [String] = []
     @State private var searchOpen = false
     @State private var query = ""
     @State private var selectedDay = Calendar.current.startOfDay(for: .now)
-    
+    @State private var saveTask: Task<Void, Never>?
+
     @Environment(\.openWindow) private var openWindow
+    
+    private var allTasks: [NoteTask] { panel.groups.flatMap(\.tasks) }
+    private var tasksByDay: [Date: [NoteTask]] { allTasks.groupedByDay() }
+    private var upNext: NoteTask? {
+        Calendar.current.isDateInToday(selectedDay) ? panel.currentTask : nil
+    }
     
     init() {
         let store = try! NoteStore.makeDefault()
         self.store = store
-        _weekPanel = StateObject(wrappedValue: TaskPanelViewModel(store: store))
-        _monthPanel = StateObject(wrappedValue: TaskPanelViewModel(store: store))
-        // The menu bar window can be created before ContentView, so it registers
-        // fonts too. A second registration only logs a harmless failure.
+        _panel = StateObject(wrappedValue: TaskPanelViewModel(store: store, scope: .anyDate, source: .allNotes))
         FontLoader.registerFonts()
     }
     
@@ -55,15 +60,19 @@ struct MiniView: View {
                 case .notes:
                     MiniNoteView(title: noteName, text: $noteText)
                 case .timeline:
-                    MiniTimelineView(
-                        tasks: weekTasks,
-                        upNext: upNext
-                    )
-                case .month:
-                    MiniMonthView(
-                        tasks: monthPanel.groups.flatMap { $0.tasks },
-                        selectedDay: $selectedDay
-                    )
+                    VStack(spacing: 10) {
+                        CalendarCard(tasksByDay: tasksByDay, range: $range, selectedDay: $selectedDay)
+                        TimelineRail(
+                            days: [selectedDay],
+                            tasksByDay: tasksByDay,
+                            overdue: overdueTasks(allTasks),
+                            upNext: upNext,
+                            showSomeday: false,
+                            onOpen: open,
+                            onToggle: toggle
+                        )
+                        AddTaskField(target: "Today", onAdd: addTask)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -75,30 +84,60 @@ struct MiniView: View {
             if searchOpen { searchOverlay }
         }
         .preferredColorScheme(.dark)
-        .onAppear(perform: reload)
-    }
-    
-    // Week data
-    
-    private var weekTasks: [NoteTask] {
-        weekPanel.groups.flatMap { $0.tasks }
-    }
-    
-    // The task to highlight as UP NEXT.
-    //
-    // Core's `currentTask(from:)` compares time of day only, not dates. Passing it
-    // the whole week could pick a Thursday 7pm task on Monday, so it gets today's
-    // tasks only.
-    private var upNext: NoteTask? {
-        let todays = weekTasks.filter { task in
-            guard let due = task.task.dueDate else { return false }
-            return Calendar.current.isDateInToday(due)
+        .environment(\.timelineStyle, .mini)
+        .onAppear {
+            selectedDay = Calendar.current.startOfDay(for: .now)
+            loadNote()
+            panel.refresh()
         }
-        return currentTask(from: todays)
+        .onChange(of: noteText) { _, _ in scheduleAutosave() }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in saveIfDirty() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in saveIfDirty() }
+        .onDisappear { saveIfDirty() }
+    }
+    
+    private func loadNote() {
+        let text = (try? store.read(noteName)) ?? ""
+        noteText = text
+        loadedText = text
+    }
+
+    private func saveIfDirty() {
+        guard noteText != loadedText else { return }
+        do {
+            try store.write(noteText, to: noteName)
+            loadedText = noteText
+        } catch {
+            print("save failed: \(error)")
+        }
+    }
+
+    private func toggle(_ task: NoteTask) {
+        saveIfDirty()
+        _ = try? toggleTask(task, in: store)
+        loadNote()
+        panel.refresh()
+    }
+
+    private func addTask(_ text: String) {
+        let line = TaskEntry.line(from: text, defaultDue: selectedDay)
+        saveIfDirty()
+        let note = DefaultNote.today.rawValue
+        let existing = (try? store.read(note)) ?? ""
+        try? store.write(existing.appendingLine(line), to: note)
+        loadNote()
+        panel.refresh()
+    }
+
+    private func open(_ name: String) {
+        saveIfDirty()
+        noteName = name
+        loadNote()
+        tab = .notes
+        searchOpen = false
     }
     
     // Header
-    
     private var header: some View {
         HStack(spacing: 10) {
             MiniGlass(radius: 16) {
@@ -113,7 +152,6 @@ struct MiniView: View {
                         .padding(.trailing, 6)
                     tabButton(.notes, icon: "book", key: "1", help: "Notes")
                     tabButton(.timeline, icon: "checkmark.square", key: "2", help: "Timeline")
-                    tabButton(.month, icon: "calendar", key: "3", help: "Month")
                 }
                 .padding(.leading, 10)
                 .padding(.trailing, 3)
@@ -144,7 +182,6 @@ struct MiniView: View {
         switch tab {
         case .notes: return noteName
         case .timeline: return Date.now.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
-        case .month: return Date.now.formatted(.dateTime.month(.wide))
         }
     }
     
@@ -255,11 +292,21 @@ struct MiniView: View {
         }
     }
     
-    private func open(_ name: String) {
-        noteName = name
-        noteText = (try? store.read(name)) ?? ""
-        tab = .notes
-        searchOpen = false
+    private func scheduleAutosave() {
+        saveTask?.cancel()
+        saveTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            if !Task.isCancelled { saveIfDirty() }
+        }
+    }
+    
+    private func syncFromDisk() {
+        let disk = (try? store.read(noteName)) ?? ""
+        if noteText == loadedText, disk != loadedText {
+            noteText = disk
+            loadedText = disk
+        }
+        panel.refresh()
     }
     
     // Data
@@ -271,11 +318,6 @@ struct MiniView: View {
     // every tab switch so the mini picks up edits made in the main window.
     private func reload() {
         noteText = (try? store.read(noteName)) ?? ""
-        
-        weekPanel.source = .allNotes
-        weekPanel.scope = .thisWeek
-        monthPanel.source = .allNotes
-        monthPanel.scope = .thisMonth
     }
     
     // Brings the main window forward, or opens a new one if it was closed.

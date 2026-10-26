@@ -14,20 +14,23 @@ struct ContentView: View {
     @State private var sidebarSource: TaskSource = .currentNote(name: DefaultNote.today.rawValue)
     @State private var noteNames: [String] = []
     @State private var route: Route = .note(DefaultNote.today.rawValue)
-    @State private var showRawOnCursor = true
-    @State private var noteText = ""
-    @State private var searchQuery = ""
+    @State private var showRawOnCursor: Bool = true
+    @State private var noteText: String = ""
+    @State private var searchQuery: String = ""
     @State private var searchExpanded = false
     @State private var showingSettings = false
     @State private var showingNewNote = false
     @FocusState private var searchFocused: Bool
     @State private var openTabs = [DefaultNote.today.rawValue]
     @State private var layout = TimelineLayout()
+    @State private var activeNoteName = DefaultNote.today.rawValue
+    @State private var loadedText = ""
+    @State private var refreshTick = 0
     
     init() {
         let store = try! NoteStore.makeDefault()
         self.store = store
-        _taskPanel = StateObject(wrappedValue: TaskPanelViewModel(store: store))
+        _taskPanel = StateObject(wrappedValue: TaskPanelViewModel(store: store, scope: .anyDate))
         FontLoader.registerFonts()
     }
     
@@ -37,7 +40,7 @@ struct ContentView: View {
                 layout: layout,
                 route: route,
                 openTabs: openTabs,
-                onRoute: { route = $0 },
+                onRoute: { saveIfDirty(); route = $0 },
                 onSelectTab: openNote,
                 onCloseTab: closeTab,
                 onToggleSidebar: { withAnimation(.snappy(duration: 0.25)) { layout.visible.toggle() } },
@@ -52,11 +55,12 @@ struct ContentView: View {
                         TaskSidebar(
                             groups: taskPanel.groups,
                             noDueDateTasks: taskPanel.noDueDateTasks,
-                            currentNoteName: currentNoteName,
+                            currentNoteName: activeNoteName,
                             upNext: upNext,
                             range: $sidebarRange,
                             source: $sidebarSource,
-                            onOpen: openNote
+                            onOpen: openNote,
+                            onToggle: toggle
                         )
                     }
                     .transition(.move(edge: .leading).combined(with: .opacity))
@@ -99,16 +103,20 @@ struct ContentView: View {
         }
         .onAppear {
             try? store.createDefaultNotesIfNeeded()
-            reloadNoteNames()
-            loadNote(currentNoteName)
+            noteNames = (try? store.listNotes()) ?? []
+            loadNote(activeNoteName)
             taskPanel.scope = sidebarRange.scope
         }
         .onChange(of: noteText) { _, newText in
-            guard case .note(let name) = route else { return }
-            taskPanel.update(lines: newText.components(separatedBy: "\n"), noteName: name)
+            taskPanel.update(lines: newText.components(separatedBy: "\n"), noteName: activeNoteName)
         }
         .onChange(of: sidebarRange) { taskPanel.scope = $1.scope }
         .onChange(of: sidebarSource) { taskPanel.source = $1 }
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in syncFromDisk() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in syncFromDisk() }
+        .onReceive(NotificationCenter.default.publisher(for: .glideSaveNow)) { _ in saveIfDirty() }
+        .onReceive(NotificationCenter.default.publisher(for: .glideReloadNow)) { _ in loadNote(activeNoteName) }
+        .onDisappear { saveIfDirty() }
     }
     
     private var currentNoteName: String {
@@ -144,22 +152,23 @@ struct ContentView: View {
         return names + ((try? store.search(query)) ?? []).map { QuickOpenResult(noteName: $0.noteName, line: $0.line) }
     }
     
+    private func tasks(in name: String) -> [NoteTask] {
+        let text = (name == activeNoteName) ? noteText : ((try? store.read(name)) ?? "")
+        return fetchTasks(lines: text.components(separatedBy: "\n"), noteName: name)
+    }
+
     private var folderNotes: [(name: String, open: Int, done: Int)] {
-        saveCurrentNote()
+        _ = refreshTick
         return ((try? store.listNotes()) ?? []).map { name in
-            let tasks = tasks(in: name)
-            let done = tasks.filter(\.task.checked).count
-            return (name: name, open: tasks.count - done, done: done)
+            let items = tasks(in: name).filter(\.task.hasCheckbox)
+            let done = items.filter(\.task.checked).count
+            return (name: name, open: items.count - done, done: done)
         }
     }
-    
+
     private var allNoteTasks: [NoteTask] {
-        saveCurrentNote()
+        _ = refreshTick
         return ((try? store.listNotes()) ?? []).flatMap(tasks(in:))
-    }
-    
-    private func tasks(in name: String) -> [NoteTask] {
-        fetchTasks(lines: ((try? store.read(name)) ?? "").components(separatedBy: "\n"), noteName: name)
     }
     
     private func saveCurrentNote() {
@@ -173,15 +182,43 @@ struct ContentView: View {
     }
     
     private func loadNote(_ name: String) {
-        noteText = (try? store.read(name)) ?? ""
+        activeNoteName = name
+        let text = (try? store.read(name)) ?? ""
+        noteText = text
+        loadedText = text
+        taskPanel.update(lines: text.components(separatedBy: "\n"), noteName: name)
+    }
+
+    private func saveIfDirty() {
+        guard noteText != loadedText else { return }
+        do {
+            try store.write(noteText, to: activeNoteName)
+            loadedText = noteText
+        } catch {
+            print("save failed: \(error)")
+        }
+    }
+
+    private func openNote(_ name: String) {
+        saveIfDirty()
+        if !openTabs.contains(name) { openTabs.append(name) }
+        route = .note(name)
+        loadNote(name)
+    }
+    
+    private func toggle(_ task: NoteTask) {
+        saveIfDirty()
+        _ = try? toggleTask(task, in: store)
+        loadNote(activeNoteName)
+        refreshTick += 1
     }
     
     private func setSettings(_ open: Bool) {
         withAnimation(.easeOut(duration: 0.2)) { showingSettings = open }
     }
     
-    private func createNote(_ name: String) -> Bool {
-        guard (try? store.write("", to: name)) != nil else { return false }
+    private func createNote(_ typedName: String) -> Bool {
+        guard let name = try? store.createNote(named: typedName) else { return false }
         reloadNoteNames()
         showingNewNote = false
         openNote(name)
@@ -189,7 +226,7 @@ struct ContentView: View {
     }
     
     private func openQuickOpen() {
-        saveCurrentNote()
+        saveIfDirty()
         reloadNoteNames()
         searchQuery = ""
         searchExpanded = true
@@ -213,25 +250,21 @@ struct ContentView: View {
         guard wasActive else { return }
         
         if openTabs.isEmpty {
-            saveCurrentNote()
+            saveIfDirty()
             route = .folder
         } else {
             openNote(openTabs[max(0, index - 1)])
         }
     }
     
-    private func openNote(_ name: String) {
-        saveCurrentNote()
-        if !openTabs.contains(name) {
-            openTabs.append(name)
+    private func syncFromDisk() {
+        let disk = (try? store.read(activeNoteName)) ?? ""
+        if noteText == loadedText, disk != loadedText {
+            noteText = disk
+            loadedText = disk
         }
-        route = .note(name)
-        loadNote(name)
-        
-        if case .currentNote = sidebarSource {
-            sidebarSource = .currentNote(name: name)
-            taskPanel.source = sidebarSource
-        }
+        taskPanel.refresh()
+        refreshTick += 1
     }
 }
 

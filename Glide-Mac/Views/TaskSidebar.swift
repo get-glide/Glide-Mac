@@ -27,6 +27,8 @@ struct TaskSidebar: View {
     @State private var selectedDay = Calendar.current.startOfDay(for: .now)
     
     private var monthOpen: Bool { range == .month }
+    private var allTasks: [NoteTask] { groups.flatMap(\.tasks) }
+    var onToggle: ((NoteTask) -> Void)? = nil
     
     var body: some View {
         let tasksByDay = groups.flatMap(\.tasks).groupedByDay()
@@ -38,7 +40,15 @@ struct TaskSidebar: View {
                 if monthOpen {
                     TimelineDayList(day: selectedDay, tasks: tasksByDay[selectedDay] ?? [], onOpen: onOpen)
                 } else {
-                    TimelineRail(tasksByDay: tasksByDay, noDueDateTasks: noDueDateTasks, upNext: upNext, onOpen: onOpen)
+                    TimelineRail(
+                        days: TimelineRail.upcomingDays(tasksByDay),
+                        tasksByDay: tasksByDay,
+                        overdue: overdueTasks(allTasks),
+                        noDueDateTasks: noDueDateTasks,
+                        upNext: upNext,
+                        onOpen: onOpen,
+                        onToggle: onToggle
+                    )
                 }
             }
             .transition(.opacity)

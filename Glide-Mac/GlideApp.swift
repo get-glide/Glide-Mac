@@ -17,6 +17,7 @@ struct GlideApp: App {
         WindowGroup(id: "main") {
             ContentView()
                 .frame(minWidth: 940, minHeight: 620)
+                .navigationTitle("Glide")
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unifiedCompact(showsTitle: false))
