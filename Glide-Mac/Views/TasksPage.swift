@@ -9,13 +9,9 @@ import SwiftUI
 import GlideCore
 
 struct TasksPage: View {
-    @State private var tasks: [NoteTask]
+    let tasks: [NoteTask]
     let onOpen: (String) -> Void
-    
-    init(tasks: [NoteTask], onOpen: @escaping (String) -> Void) {
-        _tasks = State(initialValue: tasks)
-        self.onOpen = onOpen
-    }
+    var onToggle: ((NoteTask) -> Void)? = nil
     
     private var grouped: [(subject: String, tasks: [NoteTask])] {
         let dict = Dictionary(grouping: tasks, by: { $0.noteName })
@@ -46,10 +42,14 @@ struct TasksPage: View {
     private func row(for task: NoteTask) -> some View {
         GlideTile {
             HStack {
-                Image(systemName: task.task.checked ? "checkmark.square.fill" : "square")
-                    .foregroundStyle(task.task.checked ? Theme.labelTertiary : Theme.labelSecondary)
-                    .contentShape(Rectangle())
-                    .pressable { toggle(task) }
+                if task.task.hasCheckbox {
+                    Image(systemName: task.task.checked ? "checkmark.square.fill" : "square")
+                        .foregroundStyle(task.task.checked ? Theme.labelTertiary : Theme.labelSecondary)
+                        .contentShape(Rectangle())
+                        .pressable { onToggle?(task) }
+                        .accessibilityLabel(task.task.checked ? "Mark not done" : "Mark done")
+                        .accessibilityAddTraits(.isButton)
+                }
                 
                 Text(task.task.text)
                     .font(Theme.ui(13.5))
@@ -67,9 +67,5 @@ struct TasksPage: View {
                 }
             }
         }
-    }
-    
-    private func toggle(_ task: NoteTask) {
-        // TODO: implement checkbox toggle via NoteStore
     }
 }

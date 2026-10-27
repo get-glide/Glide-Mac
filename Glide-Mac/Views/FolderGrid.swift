@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import GlideCore
 
 struct FolderGrid: View {
     let notes: [(name: String, open: Int, done: Int)]
     let onOpen: (String) -> Void
+    var onDelete: ((String) -> Void)? = nil
     
     private let columns = [GridItem(.adaptive(minimum: 180), spacing: Theme.gap)]
     
@@ -29,6 +31,10 @@ struct FolderGrid: View {
                     }
                     .contentShape(Rectangle())
                     .pressable { onOpen(note.name) }
+                    .contextMenu {
+                        Button("Delete Note", role: .destructive) { onDelete?(note.name) }
+                            .disabled(DefaultNote(rawValue: note.name) != nil)
+                    }
                 }
             }
             .padding(16)
