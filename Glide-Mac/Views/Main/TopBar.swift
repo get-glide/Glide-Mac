@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import GlideCore
 
 struct TopBar: View {
     let layout: TimelineLayout
@@ -14,6 +15,7 @@ struct TopBar: View {
     let onRoute: (Route) -> Void
     let onSelectTab: (String) -> Void
     let onCloseTab: (String) -> Void
+    let onDeleteNote: (String) -> Void
     let onToggleSidebar: () -> Void
     let onNewNote: () -> Void
     let onQuickOpen: () -> Void
@@ -93,7 +95,8 @@ struct TopBar: View {
             HStack(spacing: 2) {
                 ForEach(openTabs, id: \.self) { name in
                     TabChip(name: name, isActive: route == .note(name),
-                            onSelect: { onSelectTab(name) }, onClose: { onCloseTab(name) })
+                            onSelect: { onSelectTab(name) }, onClose: { onCloseTab(name) },
+                            onDelete: { onDeleteNote(name) })
                 }
                 Button(action: onQuickOpen) {
                     Image(systemName: "plus")
@@ -160,6 +163,7 @@ private struct TabChip: View {
     let isActive: Bool
     let onSelect: () -> Void
     let onClose: () -> Void
+    let onDelete: () -> Void
     
     var body: some View {
         HStack(spacing: 0) {
@@ -197,5 +201,9 @@ private struct TabChip: View {
         .foregroundStyle(isActive ? Color.white : Theme.chromeText)
         .frame(minWidth: 90, idealWidth: 190, maxWidth: 190)
         .background(isActive ? Color.white.opacity(0.16) : .clear, in: Capsule())
+        .contextMenu {
+            Button("Delete Note", role: .destructive, action: onDelete)
+                .disabled(DefaultNote(rawValue: name) != nil)
+        }
     }
 }

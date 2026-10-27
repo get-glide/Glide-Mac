@@ -143,7 +143,7 @@ struct GlideTextView: NSViewRepresentable {
         
         private func hideCreatedTag(in lineText: String, lineRange: NSRange, storage: NSTextStorage) {
             let ns = lineText as NSString
-            guard let regex = try? NSRegularExpression(pattern: #"\s*@created\(\d{4}-\d{2}-\d{2}\)"#) else { return }
+            guard let regex = try? NSRegularExpression(pattern: #"\s?@created\(\d{4}-\d{2}-\d{2}\)"#) else { return }
             for match in regex.matches(in: lineText, range: NSRange(location: 0, length: ns.length)) {
                 let range = NSRange(location: lineRange.location + match.range.location, length: match.range.length)
                 guard range.location + range.length <= storage.length else { continue }

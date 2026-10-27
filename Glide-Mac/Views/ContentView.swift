@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var activeNoteName = DefaultNote.today.rawValue
     @State private var loadedText = ""
     @State private var refreshTick = 0
+    @State private var pendingDelete: String?
     
     init() {
         let store = try! NoteStore.makeDefault()
@@ -43,6 +44,7 @@ struct ContentView: View {
                 onRoute: { saveIfDirty(); route = $0 },
                 onSelectTab: openNote,
                 onCloseTab: closeTab,
+                onDeleteNote: { pendingDelete = $0 },
                 onToggleSidebar: { withAnimation(.snappy(duration: 0.25)) { layout.visible.toggle() } },
                 onNewNote: { reloadNoteNames(); showingNewNote = true },
                 onQuickOpen: openQuickOpen,
@@ -117,6 +119,17 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .glideSaveNow)) { _ in saveIfDirty() }
         .onReceive(NotificationCenter.default.publisher(for: .glideReloadNow)) { _ in loadNote(activeNoteName) }
         .onDisappear { saveIfDirty() }
+        .confirmationDialog(
+            "Delete “\(pendingDelete ?? "")”?",
+            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                if let name = pendingDelete { deleteNote(name) }
+            }
+        } message: {
+            Text("This permanently deletes the file. You can't undo this.")
+        }
     }
     
     private var currentNoteName: String {
@@ -134,9 +147,9 @@ struct ContentView: View {
     private var detailPane: some View {
         switch route {
         case .folder:
-            FolderGrid(notes: folderNotes, onOpen: openNote)
+            FolderGrid(notes: folderNotes, onOpen: openNote, onDelete: { pendingDelete = $0 })
         case .tasks:
-            TasksPage(tasks: allNoteTasks, onOpen: openNote)
+            TasksPage(tasks: allNoteTasks, onOpen: openNote, onToggle: toggle)
         case .note(let name):
             NoteDetail(title: name, text: $noteText, showRawOnCursor: $showRawOnCursor)
         }
@@ -156,7 +169,7 @@ struct ContentView: View {
         let text = (name == activeNoteName) ? noteText : ((try? store.read(name)) ?? "")
         return fetchTasks(lines: text.components(separatedBy: "\n"), noteName: name)
     }
-
+    
     private var folderNotes: [(name: String, open: Int, done: Int)] {
         _ = refreshTick
         return ((try? store.listNotes()) ?? []).map { name in
@@ -165,7 +178,7 @@ struct ContentView: View {
             return (name: name, open: items.count - done, done: done)
         }
     }
-
+    
     private var allNoteTasks: [NoteTask] {
         _ = refreshTick
         return ((try? store.listNotes()) ?? []).flatMap(tasks(in:))
@@ -188,7 +201,7 @@ struct ContentView: View {
         loadedText = text
         taskPanel.update(lines: text.components(separatedBy: "\n"), noteName: name)
     }
-
+    
     private func saveIfDirty() {
         guard noteText != loadedText else { return }
         do {
@@ -198,7 +211,7 @@ struct ContentView: View {
             print("save failed: \(error)")
         }
     }
-
+    
     private func openNote(_ name: String) {
         saveIfDirty()
         if !openTabs.contains(name) { openTabs.append(name) }
@@ -255,6 +268,24 @@ struct ContentView: View {
         } else {
             openNote(openTabs[max(0, index - 1)])
         }
+    }
+    
+    private func deleteNote(_ name: String) {
+        let wasActive = name == activeNoteName
+        if wasActive { loadedText = noteText }
+        guard (try? store.delete(name)) != nil else { return }
+        openTabs.removeAll { $0 == name }
+        reloadNoteNames()
+        if wasActive {
+            if let next = openTabs.last {
+                openNote(next)
+            } else {
+                route = .folder
+                loadNote(DefaultNote.today.rawValue)
+            }
+        }
+        taskPanel.refresh()
+        refreshTick += 1
     }
     
     private func syncFromDisk() {
